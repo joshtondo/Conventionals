@@ -1,3 +1,5 @@
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
 require('dotenv').config();
 
 // Startup env var assertions — fail fast with clear message rather than silent misbehavior
