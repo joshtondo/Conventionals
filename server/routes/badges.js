@@ -1,6 +1,8 @@
 const express = require('express');
 const pool = require('../db');
 const requireAuth = require('../middleware/requireAuth');
+const { generateQR } = require('../services/qr');
+const { sendBadgeEmail } = require('../services/email');
 
 const router = express.Router();
 
@@ -76,6 +78,56 @@ router.post('/:token/checkin', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Check-in error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/badges/:token/resend
+ * Protected — resends the badge email for an existing badge.
+ */
+router.post('/:token/resend', requireAuth, async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         a.name, a.email, a.badge_type,
+         e.name AS event_name,
+         e.organizer_id
+       FROM badges b
+       JOIN attendees a ON a.id = b.attendee_id
+       JOIN events e ON e.id = a.event_id
+       WHERE b.token = $1`,
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Badge not found' });
+    }
+
+    const badge = rows[0];
+
+    if (badge.organizer_id !== req.session.organizerId) {
+      return res.status(404).json({ error: 'Badge not found' });
+    }
+
+    const badgeUrl = `${process.env.APP_URL}/badge/${token}`;
+    const qrDataUrl = await generateQR(badgeUrl);
+    await sendBadgeEmail({
+      toName: badge.name,
+      toEmail: badge.email,
+      badgeType: badge.badge_type,
+      eventName: badge.event_name,
+      badgeUrl,
+      qrDataUrl,
+    });
+
+    await pool.query('UPDATE badges SET email_sent = TRUE WHERE token = $1', [token]);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Resend error:', err.message);
+    res.status(500).json({ error: 'Failed to resend email' });
   }
 });
 
