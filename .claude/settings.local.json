@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/xdJos/BMAD/BMAD-METHOD/_bmad/core/**)",
+      "Read(//c/Users/xdJos/BMAD/BMAD-METHOD/_bmad/_config/**)",
+      "Bash(node \"C:/Users/xdJos/BMAD/BMAD-METHOD/tools/installer/bmad-cli.js\" install --directory . --modules bmm --tools claude-code --yes)",
+      "WebSearch",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:workos.com)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.prisma.io)",
+      "Bash(\"c:/Users/xdJos/Projects/Conventionals/_bmad-output/planning-artifacts/research/technical-nextjs-vercel-orm-research-2026-04-01.md\":*)",
+      "WebFetch(domain:www.vfairs.com)",
+      "Bash(npx create-next-app@latest conventionals --typescript --eslint --app --turbopack --import-alias \"@/*\" --no-tailwind --no-src-dir --yes)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
