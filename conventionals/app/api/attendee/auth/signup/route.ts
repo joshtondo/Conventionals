@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
   if (!token || typeof token !== 'string' || !password || typeof password !== 'string') {
     return NextResponse.json({ error: 'Missing token or password' }, { status: 400 })
   }
-  if (password.length > 1024) {
-    return NextResponse.json({ error: 'Missing token or password' }, { status: 400 })
+  if (password.length < 8 || password.length > 1024) {
+    return NextResponse.json({ error: 'Password must be between 8 and 1024 characters' }, { status: 400 })
   }
 
   const attendee = await getAttendeeByInviteToken(token)

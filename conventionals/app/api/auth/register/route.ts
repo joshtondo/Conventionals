@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
   }
 
-  if (password.length > 1024) {
-    return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 })
+  if (password.length < 8 || password.length > 1024) {
+    return NextResponse.json({ error: 'Password must be between 8 and 1024 characters' }, { status: 400 })
   }
 
   const normalizedEmail = email.trim().toLowerCase()

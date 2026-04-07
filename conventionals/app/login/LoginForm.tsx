@@ -83,10 +83,9 @@ export default function LoginForm() {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
-        setError(data.error ?? 'Login failed')
+        const data = await res.json().catch(() => ({}))
+        setError((data as { error?: string }).error ?? 'Login failed')
         return
       }
 

@@ -17,10 +17,12 @@ export interface SessionData {
 export const sessionOptions = {
   password: secret,
   cookieName: 'conventionals-session',
+  ttl: 60 * 60 * 8, // seal expires after 8 hours (matches cookie maxAge)
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 8, // 8 hours in seconds
+    sameSite: 'lax' as const,
   },
 }
 

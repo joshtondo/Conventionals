@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 type ContactInfo = { email?: string; linkedin?: string; twitter?: string; website?: string } | null
 
@@ -88,6 +88,13 @@ export default function ConnectionCard({ id, connectedName, contactInfo, eventNa
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const ci = contactInfo ?? {}
 
+  useEffect(() => {
+    if (status === 'saved') {
+      const timer = setTimeout(() => setStatus('idle'), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [status])
+
   async function handleSave() {
     setStatus('saving')
     try {
@@ -98,7 +105,6 @@ export default function ConnectionCard({ id, connectedName, contactInfo, eventNa
         body: JSON.stringify({ notes: notes || null }),
       })
       setStatus('saved')
-      setTimeout(() => setStatus('idle'), 2000)
     } catch {
       setStatus('idle')
     }
