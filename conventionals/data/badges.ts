@@ -9,7 +9,8 @@ export async function createAttendeeAndBadge(
   organizerId: number,
   eventId: number,
   name: string,
-  email: string
+  email: string,
+  eventName: string
 ) {
   const trimmedName = name.trim()
   const normalizedEmail = email.trim().toLowerCase()
@@ -17,7 +18,7 @@ export async function createAttendeeAndBadge(
   const [attendee] = await db
     .insert(attendees)
     .values({ eventId, name: trimmedName, email: normalizedEmail })
-    .returning({ id: attendees.id, name: attendees.name, email: attendees.email, inviteToken: attendees.inviteToken })
+    .returning({ id: attendees.id, name: attendees.name, email: attendees.email, inviteToken: attendees.inviteToken, badgeType: attendees.badgeType })
 
   const [badge] = await db
     .insert(badges)
@@ -28,7 +29,7 @@ export async function createAttendeeAndBadge(
   const qrDataUrl = await generateQR(badgeUrl)
 
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/attendee/signup?token=${attendee.inviteToken}`
-  const emailSent = await sendBadgeEmail({ to: attendee.email, name: attendee.name, badgeUrl, qrDataUrl, inviteUrl })
+  const emailSent = await sendBadgeEmail({ to: attendee.email, name: attendee.name, badgeUrl, qrDataUrl, inviteUrl, eventName, badgeType: attendee.badgeType })
 
   if (emailSent) {
     await db.update(badges).set({ emailSent: true }).where(eq(badges.id, badge.id))
@@ -73,7 +74,9 @@ export async function resendBadge(token: string, organizerId: number) {
       name: attendees.name,
       email: attendees.email,
       inviteToken: attendees.inviteToken,
+      badgeType: attendees.badgeType,
       organizerId: events.organizerId,
+      eventName: events.name,
     })
     .from(badges)
     .innerJoin(attendees, eq(attendees.id, badges.attendeeId))
@@ -84,7 +87,7 @@ export async function resendBadge(token: string, organizerId: number) {
   const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/badge/${token}`
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/attendee/signup?token=${row.inviteToken}`
   const qrDataUrl = await generateQR(badgeUrl)
-  const emailSent = await sendBadgeEmail({ to: row.email, name: row.name, badgeUrl, qrDataUrl, inviteUrl })
+  const emailSent = await sendBadgeEmail({ to: row.email, name: row.name, badgeUrl, qrDataUrl, inviteUrl, eventName: row.eventName, badgeType: row.badgeType })
 
   if (emailSent) {
     await db.update(badges).set({ emailSent: true }).where(eq(badges.id, row.id))

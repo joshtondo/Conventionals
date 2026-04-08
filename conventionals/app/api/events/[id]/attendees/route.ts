@@ -43,7 +43,7 @@ export const POST = withAuth(async (req, ctx) => {
       const email = emailKey ? row[emailKey] : ''
       if (!name || !email) { skipped++; continue }
       try {
-        await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email)
+        await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email, event.name)
         added++
       } catch (err) {
         const pgCode = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code
@@ -66,7 +66,7 @@ export const POST = withAuth(async (req, ctx) => {
   }
 
   try {
-    const result = await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email)
+    const result = await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email, event.name)
     return NextResponse.json(result, { status: 201 })
   } catch (err) {
     const pgCode = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code
