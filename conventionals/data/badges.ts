@@ -90,7 +90,7 @@ export async function resendBadge(token: string, organizerId: number) {
     await db.update(badges).set({ emailSent: true }).where(eq(badges.id, row.id))
   }
 
-  return { success: true }
+  return { success: true, emailSent }
 }
 
 export async function getDashboardStats(organizerId: number) {

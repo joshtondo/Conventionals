@@ -8,5 +8,5 @@ export const POST = withAuth(async (req, ctx) => {
   if (!result) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, emailSent: result.emailSent })
 })

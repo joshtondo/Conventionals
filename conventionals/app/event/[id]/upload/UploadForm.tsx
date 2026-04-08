@@ -248,9 +248,13 @@ export default function UploadForm({
         method: 'POST',
         credentials: 'include',
       })
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
         setResendError(data.error ?? 'Resend failed')
+        return
+      }
+      if (data.emailSent === false) {
+        setResendError('Email could not be sent — check your SendGrid account.')
         return
       }
       setResentTokens(prev => new Set(prev).add(token))
