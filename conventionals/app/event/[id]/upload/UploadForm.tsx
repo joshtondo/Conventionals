@@ -61,12 +61,14 @@ const s = {
   } as React.CSSProperties,
   input: {
     width: '100%',
-    padding: '0.5rem 0.75rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
+    padding: '9px 12px',
+    background: '#f5f3ff',
+    border: '1.5px solid #ddd6fe',
+    borderRadius: '10px',
     fontSize: '0.875rem',
-    color: '#111827',
+    color: '#1e1b4b',
     boxSizing: 'border-box' as const,
+    transition: 'border-color 0.15s, box-shadow 0.15s',
   } as React.CSSProperties,
   submitButton: {
     padding: '0.5rem 1.25rem',

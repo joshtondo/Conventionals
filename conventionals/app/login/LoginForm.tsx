@@ -34,12 +34,15 @@ const s = {
   } as React.CSSProperties,
   input: {
     width: '100%',
-    padding: '0.5rem 0.75rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
+    padding: '11px 14px',
+    background: '#f5f3ff',
+    border: '1.5px solid #ddd6fe',
+    borderRadius: '10px',
     fontSize: '1rem',
+    color: '#1e1b4b',
     marginBottom: '1rem',
     boxSizing: 'border-box',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
   } as React.CSSProperties,
   button: {
     width: '100%',
