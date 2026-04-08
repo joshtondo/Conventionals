@@ -22,12 +22,15 @@ const styles = {
   label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500' },
   input: {
     width: '100%',
-    padding: '10px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    padding: '11px 14px',
+    background: '#f5f3ff',
+    border: '1.5px solid #ddd6fe',
+    borderRadius: '10px',
     fontSize: '16px',
+    color: '#1e1b4b',
     marginBottom: '16px',
     outline: 'none',
+    transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
   },
   button: {
     width: '100%',
