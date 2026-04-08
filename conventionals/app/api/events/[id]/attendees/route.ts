@@ -46,7 +46,8 @@ export const POST = withAuth(async (req, ctx) => {
         await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email)
         added++
       } catch (err) {
-        if ((err as { code?: string }).code === '23505') { skipped++; continue }
+        const pgCode = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code
+        if (pgCode === '23505') { skipped++; continue }
         console.error('CSV row error:', (err as Error).message)
         skipped++
       }
@@ -68,7 +69,8 @@ export const POST = withAuth(async (req, ctx) => {
     const result = await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email)
     return NextResponse.json(result, { status: 201 })
   } catch (err) {
-    if ((err as { code?: string }).code === '23505') {
+    const pgCode = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code
+    if (pgCode === '23505') {
       return NextResponse.json({ error: 'Attendee already registered' }, { status: 409 })
     }
     console.error('Add attendee error:', (err as Error).message)

@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
     await session.save()
     return NextResponse.json({ success: true })
   } catch (err) {
-    if ((err as { code?: string }).code === '23505') {
+    const pgCode = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code
+    if (pgCode === '23505') {
       return NextResponse.json(
         { error: 'An account with this email already exists' },
         { status: 409 }
