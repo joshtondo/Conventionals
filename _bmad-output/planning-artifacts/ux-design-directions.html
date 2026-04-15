@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conventionals — Refined Design Direction</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #f1f5f9; color: #111827; min-height: 100vh; }
+
+  /* ── SHOWCASE NAV ── */
+  .showcase-nav {
+    position: sticky; top: 0; z-index: 200;
+    background: #fff; border-bottom: 1px solid #e2e8f0;
+    padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .showcase-title { font-size: 1rem; font-weight: 700; color: #6366f1; letter-spacing: -0.02em; }
+  .showcase-subtitle { font-size: 0.75rem; color: #94a3b8; margin-top: 1px; }
+  .screen-tabs { display: flex; gap: 4px; }
+  .screen-tab {
+    padding: 7px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; border: none; background: transparent; color: #64748b;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .screen-tab:hover { background: #f1f5f9; color: #1e293b; }
+  .screen-tab.active { background: #6366f1; color: #fff; }
+
+  /* ── SHOWCASE HERO ── */
+  .showcase-hero {
+    text-align: center; padding: 2.5rem 2rem 2rem;
+  }
+  .showcase-hero h1 { font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+  .showcase-hero p { color: #64748b; font-size: 0.9375rem; max-width: 560px; margin: 0 auto 1.5rem; line-height: 1.6; }
+  .direction-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .dir-badge { padding: 5px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+  .dir-badge.primary { background: #ede9fe; color: #6366f1; }
+  .dir-badge.accent { background: #d1fae5; color: #059669; }
+  .dir-badge.neutral { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* ── SCREENS CONTAINER ── */
+  .screens-container { padding: 0 2rem 3rem; max-width: 1400px; margin: 0 auto; }
+  .screen-panel { display: none; }
+  .screen-panel.active { display: block; }
+
+  .panel-header { margin-bottom: 1.5rem; }
+  .panel-header h2 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
+  .panel-header p { color: #64748b; font-size: 0.875rem; }
+
+  /* Phone frame */
+  .phones-row { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+  .phone-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+  .phone-frame {
+    width: 375px; border-radius: 40px;
+    background: #1c1c1e; padding: 12px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  }
+  .phone-screen {
+    border-radius: 30px; overflow: hidden;
+    background: #fff;
+    min-height: 700px;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 34px; background: #1c1c1e; border-radius: 0 0 20px 20px;
+    z-index: 10;
+  }
+
+  /* ──────────────────────────────────────────── */
+  /* SHARED APP TOKENS                            */
+  /* ──────────────────────────────────────────── */
+  :root {
+    --primary: #6366f1;
+    --primary-light: #ede9fe;
+    --primary-dark: #4f46e5;
+    --accent: #10b981;
+    --accent-light: #d1fae5;
+    --text: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    --border: #e2e8f0;
+    --surface: #f8fafc;
+    --card: #fff;
+    --radius: 16px;
+  }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: HOME / LANDING          */
+  /* ─────────────────────────────── */
+  .home-screen {
+    background: linear-gradient(160deg, #f8fafc 0%, #f1f5f9 40%, #ede9fe 100%);
+    min-height: 700px; padding: 50px 24px 32px; display: flex; flex-direction: column;
+  }
+  .home-logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+  .home-logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .home-logo-text { font-size: 1.125rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+  .home-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .home-hero-tag { display: inline-flex; align-items: center; gap: 6px; background: #ede9fe; color: #6366f1; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; margin-bottom: 20px; width: fit-content; }
+  .home-hero h1 { font-size: 2.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.04em; line-height: 1.15; margin-bottom: 12px; }
+  .home-hero p { font-size: 0.9375rem; color: #64748b; line-height: 1.6; margin-bottom: 32px; }
+  .home-buttons { display: flex; flex-direction: column; gap: 12px; }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;
+    border: none; border-radius: 14px; padding: 16px; font-size: 0.9375rem;
+    font-weight: 700; cursor: pointer; text-align: center; font-family: inherit;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+    transition: all 0.15s;
+  }
+  .btn-secondary {
+    background: #fff; color: #6366f1; border: 1.5px solid #6366f1;
+    border-radius: 14px; padding: 16px; font-size: 0.9375rem;
+    font-weight: 700; cursor: pointer; text-align: center; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .home-footer { text-align: center; margin-top: 24px; font-size: 0.75rem; color: #94a3b8; }
+  .home-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+  .home-stat { background: #fff; border-radius: 12px; padding: 14px 10px; text-align: center; border: 1px solid #e2e8f0; }
+  .home-stat-num { font-size: 1.375rem; font-weight: 800; color: #6366f1; letter-spacing: -0.02em; }
+  .home-stat-label { font-size: 0.7rem; color: #94a3b8; font-weight: 500; margin-top: 2px; }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: LOGIN TYPE SELECTOR     */
+  /* ─────────────────────────────── */
+  .login-select-screen {
+    background: #fff; min-height: 700px; padding: 50px 24px 32px;
+    display: flex; flex-direction: column;
+  }
+  .back-row { display: flex; align-items: center; gap: 8px; color: #6366f1; font-size: 0.875rem; font-weight: 600; margin-bottom: 32px; cursor: pointer; }
+  .back-arrow { font-size: 1.125rem; }
+  .login-select-hero { margin-bottom: 32px; }
+  .login-select-hero h2 { font-size: 1.625rem; font-weight: 800; color: #0f172a; letter-spacing: -0.03em; margin-bottom: 8px; }
+  .login-select-hero p { color: #64748b; font-size: 0.9rem; line-height: 1.6; }
+  .role-cards { display: flex; flex-direction: column; gap: 16px; }
+  .role-card {
+    border: 2px solid #e2e8f0; border-radius: 20px; padding: 24px;
+    cursor: pointer; transition: all 0.2s; background: #fff; text-align: left;
+  }
+  .role-card:hover { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.08); }
+  .role-card.selected { border-color: #6366f1; background: #f5f3ff; }
+  .role-card-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px; }
+  .role-card.organizer .role-card-icon { background: #ede9fe; }
+  .role-card.attendee .role-card-icon { background: #d1fae5; }
+  .role-card h3 { font-size: 1.0625rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+  .role-card p { font-size: 0.8125rem; color: #64748b; line-height: 1.5; }
+  .role-card .role-arrow { margin-top: 16px; color: #6366f1; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .divider-text { text-align: center; color: #94a3b8; font-size: 0.8125rem; font-weight: 500; margin: 8px 0; }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: LOGIN FORM              */
+  /* ─────────────────────────────── */
+  .login-form-screen {
+    background: #fff; min-height: 700px; padding: 50px 24px 32px;
+    display: flex; flex-direction: column;
+  }
+  .login-form-hero { margin-bottom: 28px; }
+  .login-form-hero h2 { font-size: 1.5rem; font-weight: 800; color: #0f172a; letter-spacing: -0.03em; margin-bottom: 6px; }
+  .login-form-hero p { color: #64748b; font-size: 0.875rem; }
+  .role-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; margin-bottom: 16px; }
+  .role-badge.org { background: #ede9fe; color: #6366f1; }
+  .role-badge.att { background: #d1fae5; color: #059669; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 0.8125rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 13px 16px; border: 1.5px solid #e2e8f0;
+    border-radius: 12px; font-size: 0.9375rem; color: #0f172a;
+    font-family: inherit; background: #f8fafc; transition: border-color 0.15s;
+    outline: none;
+  }
+  .form-input:focus { border-color: #6366f1; background: #fff; }
+  .form-input.active { border-color: #6366f1; background: #fff; }
+  .forgot-link { text-align: right; font-size: 0.8125rem; color: #6366f1; font-weight: 600; margin-top: -8px; margin-bottom: 20px; }
+  .login-btn { width: 100%; margin-top: 8px; }
+  .form-footer { text-align: center; margin-top: 20px; font-size: 0.8125rem; color: #64748b; }
+  .form-footer a { color: #6366f1; font-weight: 600; }
+  .social-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+  .social-divider-line { flex: 1; height: 1px; background: #e2e8f0; }
+  .social-divider-text { font-size: 0.75rem; color: #94a3b8; font-weight: 500; white-space: nowrap; }
+  .sso-btn {
+    width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+    background: #fff; font-size: 0.875rem; font-weight: 600; color: #374151;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: inherit;
+  }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: ORGANIZER DASHBOARD     */
+  /* ─────────────────────────────── */
+  .org-screen {
+    background: #f8fafc; min-height: 700px; display: flex; flex-direction: column;
+    position: relative;
+  }
+  /* Hamburger header */
+  .app-header {
+    background: #fff; padding: 14px 20px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #e2e8f0;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .app-header-left { display: flex; align-items: center; gap: 10px; }
+  .hamburger-btn {
+    width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; border: none;
+  }
+  .ham-line { width: 16px; height: 2px; background: #475569; border-radius: 2px; }
+  .app-header-title { font-size: 0.9375rem; font-weight: 700; color: #0f172a; }
+  .app-header-right { display: flex; align-items: center; gap: 8px; }
+  .notif-btn {
+    width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    cursor: pointer; position: relative;
+  }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 2px solid #fff; }
+  .avatar-btn { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, #6366f1, #4f46e5); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8125rem; font-weight: 700; }
+
+  /* Slide-out drawer */
+  .drawer-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; }
+  .drawer { width: 280px; background: #fff; height: 100%; padding: 50px 0 24px; display: flex; flex-direction: column; box-shadow: 4px 0 24px rgba(0,0,0,0.12); }
+  .drawer-header { padding: 0 20px 20px; border-bottom: 1px solid #e2e8f0; }
+  .drawer-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .drawer-logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .drawer-logo-text { font-size: 1rem; font-weight: 800; color: #0f172a; }
+  .drawer-user { display: flex; align-items: center; gap: 10px; }
+  .drawer-avatar { width: 40px; height: 40px; border-radius: 999px; background: linear-gradient(135deg, #6366f1, #4f46e5); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.875rem; font-weight: 700; }
+  .drawer-user-info .name { font-size: 0.875rem; font-weight: 700; color: #0f172a; }
+  .drawer-user-info .role { font-size: 0.75rem; color: #94a3b8; margin-top: 1px; }
+  .drawer-nav { flex: 1; padding: 12px 12px; }
+  .drawer-section-label { font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 8px 4px; }
+  .drawer-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px;
+    font-size: 0.875rem; font-weight: 600; color: #475569; cursor: pointer;
+    margin-bottom: 2px; transition: all 0.12s;
+  }
+  .drawer-item:hover { background: #f1f5f9; color: #0f172a; }
+  .drawer-item.active { background: #ede9fe; color: #6366f1; }
+  .drawer-item-icon { font-size: 1.125rem; width: 20px; text-align: center; }
+  .drawer-badge { margin-left: auto; background: #6366f1; color: #fff; font-size: 0.6875rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+  .drawer-footer { padding: 12px 12px 0; border-top: 1px solid #e2e8f0; }
+
+  /* Bento grid */
+  .org-content { flex: 1; padding: 16px; overflow-y: auto; }
+  .event-pill { display: inline-flex; align-items: center; gap: 6px; background: #d1fae5; color: #059669; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; margin-bottom: 14px; }
+  .event-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .bento-card {
+    background: #fff; border-radius: 20px; padding: 16px;
+    border: 1px solid #e2e8f0; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .bento-card.span-2 { grid-column: span 2; }
+  .bento-card.accent-bg { background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; color: #fff; }
+  .bento-card.green-bg { background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; }
+  .bento-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }
+  .bento-label.light { color: rgba(255,255,255,0.7); }
+  .bento-number { font-size: 2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.04em; line-height: 1; }
+  .bento-number.light { color: #fff; }
+  .bento-sub { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+  .bento-sub.light { color: rgba(255,255,255,0.7); }
+  .bento-icon-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .bento-icon { font-size: 1.375rem; }
+  .bento-trend { font-size: 0.75rem; font-weight: 600; color: #10b981; background: #d1fae5; padding: 3px 8px; border-radius: 999px; }
+  .bento-trend.light { color: #fff; background: rgba(255,255,255,0.2); }
+  .mini-bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 36px; margin-top: 10px; }
+  .mini-bar { flex: 1; border-radius: 4px; background: rgba(255,255,255,0.25); }
+  .mini-bar.full { background: rgba(255,255,255,0.6); }
+  .mini-bar.med { background: rgba(255,255,255,0.4); }
+  .progress-row { margin-top: 10px; }
+  .progress-track { height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; margin-bottom: 4px; }
+  .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #6366f1, #818cf8); }
+  .progress-fill.green { background: linear-gradient(90deg, #10b981, #34d399); }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: #94a3b8; }
+  .attendee-preview { margin-top: 10px; }
+  .attendee-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+  .attendee-row:last-child { border-bottom: none; }
+  .att-avatar { width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .att-info { flex: 1; min-width: 0; }
+  .att-name { font-size: 0.8125rem; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .att-company { font-size: 0.7rem; color: #94a3b8; }
+  .att-status { font-size: 0.6875rem; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+  .att-status.checked { background: #d1fae5; color: #059669; }
+  .att-status.reg { background: #ede9fe; color: #6366f1; }
+  .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .quick-action { padding: 10px; border-radius: 12px; border: 1.5px solid #e2e8f0; text-align: center; font-size: 0.75rem; font-weight: 600; color: #475569; cursor: pointer; background: #f8fafc; }
+  .quick-action.primary { background: #ede9fe; border-color: #c4b5fd; color: #6366f1; }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: QR SCANNER              */
+  /* ─────────────────────────────── */
+  .qr-screen {
+    background: #f8fafc; min-height: 700px; display: flex; flex-direction: column;
+  }
+  .qr-content { flex: 1; padding: 16px; display: flex; flex-direction: column; }
+  .section-title { font-size: 1.0625rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+  .section-subtitle { font-size: 0.8125rem; color: #64748b; margin-bottom: 16px; }
+  .qr-viewport {
+    background: #0f172a; border-radius: 24px; aspect-ratio: 1;
+    position: relative; overflow: hidden; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-corner { position: absolute; width: 40px; height: 40px; }
+  .qr-corner.tl { top: 20px; left: 20px; border-top: 3px solid #6366f1; border-left: 3px solid #6366f1; border-radius: 6px 0 0 0; }
+  .qr-corner.tr { top: 20px; right: 20px; border-top: 3px solid #6366f1; border-right: 3px solid #6366f1; border-radius: 0 6px 0 0; }
+  .qr-corner.bl { bottom: 20px; left: 20px; border-bottom: 3px solid #6366f1; border-left: 3px solid #6366f1; border-radius: 0 0 0 6px; }
+  .qr-corner.br { bottom: 20px; right: 20px; border-bottom: 3px solid #6366f1; border-right: 3px solid #6366f1; border-radius: 0 0 6px 0; }
+  .qr-scan-line {
+    position: absolute; left: 20px; right: 20px; height: 2px;
+    background: linear-gradient(90deg, transparent, #6366f1, transparent);
+    top: 50%; animation: scanline 2s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(99,102,241,0.6);
+  }
+  @keyframes scanline { 0%{top:20px;} 100%{top:calc(100% - 20px);} }
+  .qr-center-icon { font-size: 3rem; opacity: 0.15; }
+  .qr-hint { text-align: center; color: #94a3b8; font-size: 0.8125rem; margin-bottom: 16px; }
+  .qr-or { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .qr-or-line { flex: 1; height: 1px; background: #e2e8f0; }
+  .qr-or-text { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+  .qr-manual-input {
+    width: 100%; padding: 13px 16px; border: 1.5px solid #e2e8f0;
+    border-radius: 12px; font-size: 0.9375rem; color: #0f172a;
+    font-family: inherit; background: #fff; outline: none; margin-bottom: 12px;
+  }
+  .recent-checkins { }
+  .recent-label { font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .checkin-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
+  .checkin-avatar { width: 36px; height: 36px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .checkin-info { flex: 1; }
+  .checkin-name { font-size: 0.875rem; font-weight: 600; color: #0f172a; }
+  .checkin-time { font-size: 0.75rem; color: #94a3b8; }
+  .checkin-badge { font-size: 0.6875rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: #d1fae5; color: #059669; }
+  .success-card { background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; padding: 16px; color: #fff; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .success-icon { font-size: 2rem; }
+  .success-info .success-name { font-size: 1rem; font-weight: 700; }
+  .success-info .success-sub { font-size: 0.8125rem; opacity: 0.8; margin-top: 2px; }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: ATTENDEE HOME           */
+  /* ─────────────────────────────── */
+  .att-screen {
+    background: #f8fafc; min-height: 700px; display: flex; flex-direction: column;
+  }
+  .att-content { flex: 1; padding: 16px; }
+  .att-welcome { margin-bottom: 16px; }
+  .att-welcome h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+  .att-welcome p { font-size: 0.8125rem; color: #64748b; margin-top: 2px; }
+  .att-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+  .att-tab {
+    flex: 1; padding: 8px 12px; border-radius: 9px; font-size: 0.8125rem; font-weight: 600;
+    cursor: pointer; border: none; background: transparent; color: #64748b;
+    transition: all 0.15s; font-family: inherit; text-align: center;
+  }
+  .att-tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* Swipe card */
+  .swipe-area { position: relative; height: 340px; margin-bottom: 16px; }
+  .swipe-card {
+    position: absolute; width: 100%; background: #fff;
+    border-radius: 24px; border: 1px solid #e2e8f0;
+    overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .swipe-card:nth-child(3) { transform: rotate(-3deg) scale(0.93); top: 16px; z-index: 1; }
+  .swipe-card:nth-child(2) { transform: rotate(1.5deg) scale(0.96); top: 8px; z-index: 2; }
+  .swipe-card:nth-child(1) { transform: rotate(0deg) scale(1); top: 0; z-index: 3; }
+  .swipe-card-header { background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 24px 20px 20px; color: #fff; }
+  .swipe-card-avatar-row { display: flex; align-items: center; gap: 12px; }
+  .swipe-card-avatar { width: 56px; height: 56px; border-radius: 999px; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 1.375rem; font-weight: 700; border: 2px solid rgba(255,255,255,0.4); }
+  .swipe-card-name { font-size: 1.125rem; font-weight: 700; }
+  .swipe-card-title { font-size: 0.8125rem; opacity: 0.85; }
+  .swipe-card-company { font-size: 0.8125rem; opacity: 0.7; margin-top: 2px; }
+  .swipe-card-body { padding: 14px 20px; }
+  .swipe-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .swipe-tag { background: #ede9fe; color: #6366f1; font-size: 0.7rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+  .swipe-card-bio { font-size: 0.8125rem; color: #475569; line-height: 1.5; }
+  .swipe-actions { display: flex; justify-content: center; gap: 16px; }
+  .swipe-btn {
+    width: 56px; height: 56px; border-radius: 999px; border: 2px solid;
+    display: flex; align-items: center; justify-content: center; font-size: 1.375rem;
+    cursor: pointer; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.15s;
+  }
+  .swipe-btn.pass { border-color: #fca5a5; color: #ef4444; }
+  .swipe-btn.back { border-color: #fde68a; color: #f59e0b; }
+  .swipe-btn.connect { border-color: #6ee7b7; color: #10b981; width: 64px; height: 64px; font-size: 1.625rem; }
+  .swipe-btn.super { border-color: #a5b4fc; color: #6366f1; }
+  .swipe-count { text-align: center; font-size: 0.75rem; color: #94a3b8; margin-top: 8px; }
+
+  /* Connections tab */
+  .connections-list { }
+  .connection-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .conn-avatar { width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .conn-info { flex: 1; }
+  .conn-name { font-size: 0.9rem; font-weight: 700; color: #0f172a; }
+  .conn-title { font-size: 0.75rem; color: #64748b; }
+  .conn-match { font-size: 0.6875rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: #ede9fe; color: #6366f1; }
+  .message-btn {
+    padding: 7px 14px; border-radius: 10px; background: #6366f1; color: #fff;
+    font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; font-family: inherit;
+  }
+
+  /* Schedule tab */
+  .schedule-item { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; }
+  .schedule-time-col { text-align: center; min-width: 44px; }
+  .schedule-time { font-size: 0.75rem; font-weight: 700; color: #6366f1; }
+  .schedule-ampm { font-size: 0.6875rem; color: #94a3b8; }
+  .schedule-dot-line { display: flex; flex-direction: column; align-items: center; margin-top: 4px; }
+  .schedule-dot { width: 8px; height: 8px; border-radius: 50%; background: #6366f1; }
+  .schedule-line { width: 2px; flex: 1; background: #e2e8f0; margin-top: 4px; }
+  .schedule-info { flex: 1; }
+  .schedule-name { font-size: 0.875rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+  .schedule-location { font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .schedule-tag { display: inline-block; background: #d1fae5; color: #059669; font-size: 0.6875rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+
+  /* ─────────────────────────────── */
+  /* SCREEN: BADGE PAGE              */
+  /* ─────────────────────────────── */
+  .badge-screen {
+    background: linear-gradient(160deg, #f8fafc 0%, #ede9fe 100%); min-height: 700px;
+    display: flex; flex-direction: column;
+  }
+  .badge-content { flex: 1; padding: 16px; display: flex; flex-direction: column; align-items: center; }
+  .badge-card {
+    width: 100%; background: #fff; border-radius: 28px;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.18), 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(99,102,241,0.1);
+  }
+  .badge-card-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #7c3aed 100%);
+    padding: 28px 24px 24px; text-align: center; position: relative; overflow: hidden;
+  }
+  .badge-header-pattern {
+    position: absolute; inset: 0; opacity: 0.08;
+    background-image: radial-gradient(circle at 20% 20%, #fff 1px, transparent 1px), radial-gradient(circle at 80% 80%, #fff 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .badge-event-name { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; position: relative; }
+  .badge-avatar {
+    width: 80px; height: 80px; border-radius: 999px; margin: 0 auto 12px;
+    background: rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 800; color: #fff; position: relative;
+  }
+  .badge-verified { position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: 2px solid #fff; }
+  .badge-name { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; position: relative; }
+  .badge-title { font-size: 0.875rem; color: rgba(255,255,255,0.8); margin-top: 4px; position: relative; }
+  .badge-company { font-size: 0.875rem; color: rgba(255,255,255,0.65); position: relative; }
+  .badge-card-body { padding: 20px 24px; }
+  .badge-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; justify-content: center; }
+  .badge-tag { background: #ede9fe; color: #6366f1; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; }
+  .badge-tag.green { background: #d1fae5; color: #059669; }
+  .badge-bio { font-size: 0.8125rem; color: #475569; text-align: center; line-height: 1.6; margin-bottom: 16px; }
+  .badge-qr-row { display: flex; justify-content: center; margin-bottom: 16px; }
+  .badge-qr { width: 80px; height: 80px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; color: #94a3b8; text-align: center; }
+  .badge-actions { display: flex; gap: 8px; }
+  .badge-action { flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid #e2e8f0; text-align: center; font-size: 0.8125rem; font-weight: 600; color: #475569; cursor: pointer; background: #f8fafc; }
+  .badge-action.primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border: none; }
+  .badge-social { display: flex; justify-content: center; gap: 12px; margin-bottom: 16px; }
+  .social-chip { padding: 6px 14px; border-radius: 999px; border: 1.5px solid #e2e8f0; font-size: 0.75rem; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 6px; }
+
+  /* ─────────────────────────────── */
+  /* DESIGN TOKENS REFERENCE         */
+  /* ─────────────────────────────── */
+  .tokens-screen { padding: 16px; }
+  .token-section { margin-bottom: 24px; }
+  .token-section-title { font-size: 0.875rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+  .color-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .swatch { border-radius: 12px; aspect-ratio: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 6px; }
+  .swatch-name { font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.8); }
+  .swatch-hex { font-size: 0.6rem; color: rgba(255,255,255,0.6); }
+  .swatch.dark .swatch-name, .swatch.dark .swatch-hex { color: rgba(0,0,0,0.5); }
+  .font-demo { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px; }
+  .font-sample-xl { font-size: 1.5rem; font-weight: 800; color: #0f172a; letter-spacing: -0.03em; }
+  .font-sample-lg { font-size: 1.125rem; font-weight: 700; color: #0f172a; }
+  .font-sample-base { font-size: 0.9375rem; font-weight: 400; color: #475569; margin-top: 4px; }
+  .font-sample-sm { font-size: 0.75rem; font-weight: 600; color: #94a3b8; }
+
+  /* ── UTILITIES ── */
+  .gap-row { display: flex; gap: 8px; align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- SHOWCASE NAV -->
+<nav class="showcase-nav">
+  <div>
+    <div class="showcase-title">Conventionals — Design Direction</div>
+    <div class="showcase-subtitle">Bento Social · Mobile-First · Combined Direction</div>
+  </div>
+  <div class="screen-tabs">
+    <button class="screen-tab active" onclick="showScreen('home')">Home</button>
+    <button class="screen-tab" onclick="showScreen('login')">Login</button>
+    <button class="screen-tab" onclick="showScreen('organizer')">Organizer</button>
+    <button class="screen-tab" onclick="showScreen('qr')">QR Scan</button>
+    <button class="screen-tab" onclick="showScreen('attendee')">Attendee</button>
+    <button class="screen-tab" onclick="showScreen('badge')">Badge</button>
+    <button class="screen-tab" onclick="showScreen('tokens')">Tokens</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="showcase-hero">
+  <h1>Bento Social — Refined Direction</h1>
+  <p>Bento grid dashboard for organizers, Tinder-style swipe for attendees — mobile-first throughout with hamburger navigation.</p>
+  <div class="direction-badges">
+    <span class="dir-badge primary">Bento Dashboard</span>
+    <span class="dir-badge accent">Swipe Social</span>
+    <span class="dir-badge neutral">Mobile-First</span>
+    <span class="dir-badge neutral">Hamburger Nav</span>
+    <span class="dir-badge neutral">QR Check-in</span>
+    <span class="dir-badge neutral">No Dark Mode</span>
+  </div>
+</div>
+
+<!-- SCREENS CONTAINER -->
+<div class="screens-container">
+
+  <!-- ── SCREEN: HOME PAGE ── -->
+  <div id="screen-home" class="screen-panel active">
+    <div class="panel-header">
+      <h2>Home / Landing Page</h2>
+      <p>Login + Register buttons. Clean, credible, mobile-optimized landing.</p>
+    </div>
+    <div class="phones-row">
+      <div class="phone-wrap">
+        <div class="phone-label">Mobile Home</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="home-screen">
+              <div class="home-logo-row">
+                <div class="home-logo-icon">🎪</div>
+                <span class="home-logo-text">Conventionals</span>
+              </div>
+              <div class="home-hero">
+                <div class="home-hero-tag">✨ Event experiences, reinvented</div>
+                <h1>Connect, network, and grow at every event.</h1>
+                <p>The smart badge + networking platform for modern events. Organizers run it, attendees love it.</p>
+                <div class="home-stats">
+                  <div class="home-stat">
+                    <div class="home-stat-num">12k+</div>
+                    <div class="home-stat-label">Events</div>
+                  </div>
+                  <div class="home-stat">
+                    <div class="home-stat-num">98%</div>
+                    <div class="home-stat-label">Satisfaction</div>
+                  </div>
+                  <div class="home-stat">
+                    <div class="home-stat-num">500k</div>
+                    <div class="home-stat-label">Attendees</div>
+                  </div>
+                </div>
+                <div class="home-buttons">
+                  <button class="btn-primary">Log In</button>
+                  <button class="btn-secondary">Create Account</button>
+                </div>
+              </div>
+              <div class="home-footer">By continuing, you agree to our Terms & Privacy Policy</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: LOGIN SELECTOR ── -->
+  <div id="screen-login" class="screen-panel">
+    <div class="panel-header">
+      <h2>Login Flow</h2>
+      <p>After tapping "Log In", user selects their role before seeing the login form.</p>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-wrap">
+        <div class="phone-label">Step 1 · Choose Role</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="login-select-screen">
+              <div class="back-row"><span class="back-arrow">←</span> Back</div>
+              <div class="login-select-hero">
+                <h2>Welcome back.</h2>
+                <p>How are you joining today? We'll take you to the right place.</p>
+              </div>
+              <div class="role-cards">
+                <div class="role-card organizer selected">
+                  <div class="role-card-icon">🏢</div>
+                  <h3>I'm an Organizer</h3>
+                  <p>Manage your event, check in attendees, view analytics, and send updates.</p>
+                  <div class="role-arrow">Go to Organizer Login →</div>
+                </div>
+                <div class="divider-text">— or —</div>
+                <div class="role-card attendee">
+                  <div class="role-card-icon">🎟️</div>
+                  <h3>I'm an Attendee</h3>
+                  <p>Access your badge, connect with people, and explore the event schedule.</p>
+                  <div class="role-arrow">Go to Attendee Login →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone-label">Step 2 · Organizer Login</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="login-form-screen">
+              <div class="back-row"><span class="back-arrow">←</span> Change role</div>
+              <div class="role-badge org">🏢 Organizer Login</div>
+              <div class="login-form-hero">
+                <h2>Sign in to your dashboard</h2>
+                <p>Manage your events and attendees.</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email address</label>
+                <input class="form-input active" type="email" value="sarah@acme-events.com" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" value="••••••••••" readonly>
+              </div>
+              <div class="forgot-link">Forgot password?</div>
+              <button class="btn-primary login-btn">Sign In</button>
+              <div class="social-divider">
+                <div class="social-divider-line"></div>
+                <div class="social-divider-text">or continue with</div>
+                <div class="social-divider-line"></div>
+              </div>
+              <button class="sso-btn">🔗 &nbsp;Single Sign-On (SSO)</button>
+              <div class="form-footer">No account? <a href="#">Create one free →</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone-label">Step 2 · Attendee Login</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="login-form-screen">
+              <div class="back-row"><span class="back-arrow">←</span> Change role</div>
+              <div class="role-badge att">🎟️ Attendee Login</div>
+              <div class="login-form-hero">
+                <h2>Access your event experience</h2>
+                <p>Connect with attendees and view your badge.</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email address</label>
+                <input class="form-input active" type="email" value="alex@salesforce.com" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" value="••••••••••" readonly>
+              </div>
+              <div class="forgot-link">Forgot password?</div>
+              <button class="btn-primary login-btn" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.35);">Access My Badge</button>
+              <div class="social-divider">
+                <div class="social-divider-line"></div>
+                <div class="social-divider-text">or use event code</div>
+                <div class="social-divider-line"></div>
+              </div>
+              <input class="form-input" style="text-align:center;font-weight:700;letter-spacing:0.15em;" value="CONF-2024" readonly>
+              <div class="form-footer">New to Conventionals? <a href="#">Create account →</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCREEN: ORGANIZER DASHBOARD ── -->
+  <div id="screen-organizer" class="screen-panel">
+    <div class="panel-header">
+      <h2>Organizer Dashboard</h2>
+      <p>Bento grid layout with hamburger navigation. Live event stats at a glance.</p>
+    </div>
+    <div class="phones-row">
+
+      <!-- Drawer open -->
+      <div class="phone-wrap">
+        <div class="phone-label">Hamburger Menu Open</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="org-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">Dashboard</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+                  <div class="avatar-btn">SC</div>
+                </div>
+              </div>
+              <!-- Drawer overlay -->
+              <div class="drawer-overlay">
+                <div class="drawer">
+                  <div class="drawer-header">
+                    <div class="drawer-logo">
+                      <div class="drawer-logo-icon">🎪</div>
+                      <span class="drawer-logo-text">Conventionals</span>
+                    </div>
+                    <div class="drawer-user">
+                      <div class="drawer-avatar">SC</div>
+                      <div class="drawer-user-info">
+                        <div class="name">Sarah Chen</div>
+                        <div class="role">Event Organizer</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="drawer-nav">
+                    <div class="drawer-section-label">Event</div>
+                    <div class="drawer-item active"><span class="drawer-item-icon">📊</span>Dashboard</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">👥</span>Attendees <span class="drawer-badge">248</span></div>
+                    <div class="drawer-item"><span class="drawer-item-icon">📷</span>Scan Check-in</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">📅</span>Schedule</div>
+                    <div class="drawer-section-label">Manage</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">📢</span>Announcements</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">📊</span>Analytics</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">⚙️</span>Event Settings</div>
+                    <div class="drawer-section-label">Account</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">👤</span>Profile</div>
+                    <div class="drawer-item"><span class="drawer-item-icon">🚪</span>Sign Out</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="phone-wrap">
+        <div class="phone-label">Dashboard — Bento Grid</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="org-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">Dashboard</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+                  <div class="avatar-btn">SC</div>
+                </div>
+              </div>
+              <div class="org-content">
+                <div class="event-pill"><div class="event-pill-dot"></div>SalesConf 2024 · LIVE</div>
+                <div class="bento-grid">
+
+                  <div class="bento-card accent-bg">
+                    <div class="bento-icon-row">
+                      <div class="bento-icon">👥</div>
+                      <div class="bento-trend light">+12 today</div>
+                    </div>
+                    <div class="bento-label light">Registered</div>
+                    <div class="bento-number light">248</div>
+                    <div class="bento-sub light">of 300 capacity</div>
+                    <div class="progress-row">
+                      <div class="progress-track" style="background:rgba(255,255,255,0.2)"><div class="progress-fill" style="width:82%;background:rgba(255,255,255,0.7)"></div></div>
+                    </div>
+                  </div>
+
+                  <div class="bento-card green-bg">
+                    <div class="bento-icon-row">
+                      <div class="bento-icon">✅</div>
+                      <div class="bento-trend light">+8 today</div>
+                    </div>
+                    <div class="bento-label light">Checked In</div>
+                    <div class="bento-number light">187</div>
+                    <div class="bento-sub light">75% attendance rate</div>
+                    <div class="mini-bar-chart">
+                      <div class="mini-bar" style="height:40%"></div>
+                      <div class="mini-bar med" style="height:60%"></div>
+                      <div class="mini-bar med" style="height:50%"></div>
+                      <div class="mini-bar full" style="height:90%"></div>
+                      <div class="mini-bar full" style="height:100%"></div>
+                      <div class="mini-bar full" style="height:80%"></div>
+                    </div>
+                  </div>
+
+                  <div class="bento-card">
+                    <div class="bento-icon-row">
+                      <div class="bento-icon">🤝</div>
+                      <div class="bento-trend">+24</div>
+                    </div>
+                    <div class="bento-label">Connections</div>
+                    <div class="bento-number">89</div>
+                    <div class="bento-sub">made today</div>
+                  </div>
+
+                  <div class="bento-card">
+                    <div class="bento-icon-row">
+                      <div class="bento-icon">⏱️</div>
+                    </div>
+                    <div class="bento-label">Next Session</div>
+                    <div style="font-size:1.125rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;line-height:1.2;margin-top:4px;">2:30 PM</div>
+                    <div class="bento-sub">Panel: RevOps</div>
+                  </div>
+
+                  <div class="bento-card span-2">
+                    <div class="bento-icon-row">
+                      <div class="bento-icon">🙋</div>
+                      <div style="font-size:0.75rem;color:#6366f1;font-weight:600;cursor:pointer;">View all →</div>
+                    </div>
+                    <div class="bento-label">Recent Attendees</div>
+                    <div class="attendee-preview">
+                      <div class="attendee-row">
+                        <div class="att-avatar" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">AK</div>
+                        <div class="att-info"><div class="att-name">Alex Kim</div><div class="att-company">Salesforce · AE</div></div>
+                        <div class="att-status checked">✓ In</div>
+                      </div>
+                      <div class="attendee-row">
+                        <div class="att-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">MR</div>
+                        <div class="att-info"><div class="att-name">Maria Rodriguez</div><div class="att-company">HubSpot · SDR</div></div>
+                        <div class="att-status checked">✓ In</div>
+                      </div>
+                      <div class="attendee-row">
+                        <div class="att-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">JT</div>
+                        <div class="att-info"><div class="att-name">James Tran</div><div class="att-company">Outreach · VP</div></div>
+                        <div class="att-status reg">Registered</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="bento-card span-2">
+                    <div class="bento-label" style="margin-bottom:10px">Quick Actions</div>
+                    <div class="quick-actions">
+                      <div class="quick-action primary">📷 Scan QR</div>
+                      <div class="quick-action">📢 Announce</div>
+                      <div class="quick-action">📋 Export</div>
+                      <div class="quick-action">➕ Add Attendee</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCREEN: QR SCANNER ── -->
+  <div id="screen-qr" class="screen-panel">
+    <div class="panel-header">
+      <h2>QR Check-In Scanner</h2>
+      <p>Organizers scan attendee QR codes for instant check-in. Also supports manual badge ID entry.</p>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-wrap">
+        <div class="phone-label">Scanner — Ready to Scan</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="qr-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">Scan Check-In</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">⚡</div>
+                  <div class="avatar-btn">SC</div>
+                </div>
+              </div>
+              <div class="qr-content">
+                <div class="section-title">Scan Attendee Badge</div>
+                <div class="section-subtitle">Point camera at attendee's QR code</div>
+                <div class="qr-viewport">
+                  <div class="qr-corner tl"></div>
+                  <div class="qr-corner tr"></div>
+                  <div class="qr-corner bl"></div>
+                  <div class="qr-corner br"></div>
+                  <div class="qr-scan-line"></div>
+                  <div class="qr-center-icon">📷</div>
+                </div>
+                <div class="qr-hint">Hold steady — scanning automatically</div>
+                <div class="qr-or"><div class="qr-or-line"></div><div class="qr-or-text">or enter manually</div><div class="qr-or-line"></div></div>
+                <input class="qr-manual-input" placeholder="Enter Badge ID (e.g. CVN-00142)" readonly>
+                <button class="btn-primary" style="margin-bottom:16px;">Look Up Attendee</button>
+                <div class="recent-label">Recent Check-ins</div>
+                <div class="checkin-row">
+                  <div class="checkin-avatar" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">AK</div>
+                  <div class="checkin-info"><div class="checkin-name">Alex Kim</div><div class="checkin-time">2:14 PM · Salesforce</div></div>
+                  <div class="checkin-badge">✓ In</div>
+                </div>
+                <div class="checkin-row">
+                  <div class="checkin-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">MR</div>
+                  <div class="checkin-info"><div class="checkin-name">Maria Rodriguez</div><div class="checkin-time">2:09 PM · HubSpot</div></div>
+                  <div class="checkin-badge">✓ In</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone-label">Scanner — Successful Check-In</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="qr-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">Scan Check-In</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">⚡</div>
+                  <div class="avatar-btn">SC</div>
+                </div>
+              </div>
+              <div class="qr-content">
+                <div class="success-card">
+                  <div class="success-icon">✅</div>
+                  <div class="success-info">
+                    <div class="success-name">James Tran — Checked In!</div>
+                    <div class="success-sub">VP Sales · Outreach.io · 2:17 PM</div>
+                  </div>
+                </div>
+                <div class="section-title">Scan Next Attendee</div>
+                <div class="section-subtitle">Ready for the next badge</div>
+                <div class="qr-viewport" style="aspect-ratio:4/3">
+                  <div class="qr-corner tl"></div>
+                  <div class="qr-corner tr"></div>
+                  <div class="qr-corner bl"></div>
+                  <div class="qr-corner br"></div>
+                  <div class="qr-scan-line"></div>
+                  <div class="qr-center-icon">📷</div>
+                </div>
+                <div class="qr-hint">Auto-scanning… hold badge steady</div>
+                <div class="recent-label">Today's Check-ins</div>
+                <div class="checkin-row">
+                  <div class="checkin-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">JT</div>
+                  <div class="checkin-info"><div class="checkin-name">James Tran</div><div class="checkin-time">2:17 PM · Just now</div></div>
+                  <div class="checkin-badge">✓ In</div>
+                </div>
+                <div class="checkin-row">
+                  <div class="checkin-avatar" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">AK</div>
+                  <div class="checkin-info"><div class="checkin-name">Alex Kim</div><div class="checkin-time">2:14 PM · Salesforce</div></div>
+                  <div class="checkin-badge">✓ In</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCREEN: ATTENDEE ── -->
+  <div id="screen-attendee" class="screen-panel">
+    <div class="panel-header">
+      <h2>Attendee Experience</h2>
+      <p>Swipe-to-connect tab, connections list, and schedule — hamburger nav matches organizer.</p>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-wrap">
+        <div class="phone-label">Discover Tab — Swipe</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="att-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">Discover People</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+                  <div class="avatar-btn">AK</div>
+                </div>
+              </div>
+              <div class="att-content">
+                <div class="att-tabs">
+                  <button class="att-tab active">Discover</button>
+                  <button class="att-tab">Connections</button>
+                  <button class="att-tab">Schedule</button>
+                </div>
+                <div class="swipe-area">
+                  <div class="swipe-card">
+                    <div class="swipe-card-header">
+                      <div class="swipe-card-avatar-row">
+                        <div class="swipe-card-avatar">CR</div>
+                        <div>
+                          <div class="swipe-card-name">Chris Roberts</div>
+                          <div class="swipe-card-title">Head of Enterprise Sales</div>
+                          <div class="swipe-card-company">Gong · San Francisco</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="swipe-card-body">
+                      <div class="swipe-tags">
+                        <span class="swipe-tag">Enterprise Sales</span>
+                        <span class="swipe-tag">RevOps</span>
+                        <span class="swipe-tag">SaaS</span>
+                      </div>
+                      <div class="swipe-card-bio">Building and scaling outbound teams. Always happy to talk pipeline strategy and forecasting. Let's connect!</div>
+                    </div>
+                  </div>
+                  <div class="swipe-card">
+                    <div class="swipe-card-header" style="background:linear-gradient(135deg,#10b981,#059669)">
+                      <div class="swipe-card-avatar-row">
+                        <div class="swipe-card-avatar">LW</div>
+                        <div>
+                          <div class="swipe-card-name">Lisa Wong</div>
+                          <div class="swipe-card-title">VP Revenue Operations</div>
+                          <div class="swipe-card-company">Outreach</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="swipe-card-body"></div>
+                  </div>
+                  <div class="swipe-card">
+                    <div class="swipe-card-header" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                      <div class="swipe-card-avatar-row">
+                        <div class="swipe-card-avatar">MJ</div>
+                        <div>
+                          <div class="swipe-card-name">Maya Johnson</div>
+                          <div class="swipe-card-title">SDR Manager</div>
+                          <div class="swipe-card-company">Salesloft</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="swipe-card-body"></div>
+                  </div>
+                </div>
+                <div class="swipe-actions">
+                  <button class="swipe-btn pass">✕</button>
+                  <button class="swipe-btn back">↩</button>
+                  <button class="swipe-btn connect">💚</button>
+                  <button class="swipe-btn super">⭐</button>
+                </div>
+                <div class="swipe-count">12 people nearby · Swipe right to connect</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone-label">Connections Tab</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="att-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">My Connections</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">🔔</div>
+                  <div class="avatar-btn">AK</div>
+                </div>
+              </div>
+              <div class="att-content">
+                <div class="att-tabs">
+                  <button class="att-tab">Discover</button>
+                  <button class="att-tab active">Connections</button>
+                  <button class="att-tab">Schedule</button>
+                </div>
+                <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:12px;font-weight:500;">5 connections made today</div>
+                <div class="connections-list">
+                  <div class="connection-card">
+                    <div class="conn-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">LW</div>
+                    <div class="conn-info">
+                      <div class="conn-name">Lisa Wong</div>
+                      <div class="conn-title">VP RevOps · Outreach</div>
+                    </div>
+                    <button class="message-btn">Message</button>
+                  </div>
+                  <div class="connection-card">
+                    <div class="conn-avatar" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">MR</div>
+                    <div class="conn-info">
+                      <div class="conn-name">Maria Rodriguez</div>
+                      <div class="conn-title">SDR · HubSpot</div>
+                    </div>
+                    <button class="message-btn">Message</button>
+                  </div>
+                  <div class="connection-card">
+                    <div class="conn-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">JT</div>
+                    <div class="conn-info">
+                      <div class="conn-name">James Tran</div>
+                      <div class="conn-title">VP Sales · Outreach</div>
+                    </div>
+                    <button class="message-btn">Message</button>
+                  </div>
+                  <div class="connection-card">
+                    <div class="conn-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d)">SC</div>
+                    <div class="conn-info">
+                      <div class="conn-name">Sophia Chen</div>
+                      <div class="conn-title">AE · Salesforce</div>
+                    </div>
+                    <button class="message-btn">Message</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone-label">Schedule Tab</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="att-screen">
+              <div class="app-header">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></div>
+                  <span class="app-header-title">Schedule</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">🔔</div>
+                  <div class="avatar-btn">AK</div>
+                </div>
+              </div>
+              <div class="att-content">
+                <div class="att-tabs">
+                  <button class="att-tab">Discover</button>
+                  <button class="att-tab">Connections</button>
+                  <button class="att-tab active">Schedule</button>
+                </div>
+                <div style="font-size:0.875rem;font-weight:700;color:#0f172a;margin-bottom:12px;">Tuesday, Nov 12</div>
+                <div class="schedule-item">
+                  <div class="schedule-time-col">
+                    <div class="schedule-time">9:00</div>
+                    <div class="schedule-ampm">AM</div>
+                    <div class="schedule-dot-line"><div class="schedule-dot"></div><div class="schedule-line"></div></div>
+                  </div>
+                  <div class="schedule-info">
+                    <div class="schedule-name">Opening Keynote</div>
+                    <div class="schedule-location">📍 Main Hall</div>
+                    <div class="schedule-tag">Keynote</div>
+                  </div>
+                </div>
+                <div class="schedule-item" style="border-left: 3px solid #6366f1; padding-left: 11px;">
+                  <div class="schedule-time-col">
+                    <div class="schedule-time">2:30</div>
+                    <div class="schedule-ampm">PM</div>
+                    <div class="schedule-dot-line"><div class="schedule-dot"></div></div>
+                  </div>
+                  <div class="schedule-info">
+                    <div class="schedule-name">RevOps Panel Discussion</div>
+                    <div class="schedule-location">📍 Room B · Now Live</div>
+                    <div class="schedule-tag">⚡ Live Now</div>
+                  </div>
+                </div>
+                <div class="schedule-item">
+                  <div class="schedule-time-col">
+                    <div class="schedule-time">4:00</div>
+                    <div class="schedule-ampm">PM</div>
+                    <div class="schedule-dot-line"><div class="schedule-dot"></div></div>
+                  </div>
+                  <div class="schedule-info">
+                    <div class="schedule-name">Networking Happy Hour</div>
+                    <div class="schedule-location">📍 Rooftop Terrace</div>
+                    <div class="schedule-tag">Networking</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCREEN: BADGE PAGE ── -->
+  <div id="screen-badge" class="screen-panel">
+    <div class="panel-header">
+      <h2>Digital Badge</h2>
+      <p>The attendee's identity card. Shareable, scannable, delightful.</p>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-wrap">
+        <div class="phone-label">My Badge</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="badge-screen">
+              <div class="app-header" style="background:transparent;border:none;">
+                <div class="app-header-left">
+                  <div class="hamburger-btn"><div class="ham-line" style="background:#475569"></div><div class="ham-line" style="background:#475569"></div><div class="ham-line" style="background:#475569"></div></div>
+                  <span class="app-header-title">My Badge</span>
+                </div>
+                <div class="app-header-right">
+                  <div class="notif-btn">↗️</div>
+                </div>
+              </div>
+              <div class="badge-content">
+                <div class="badge-card">
+                  <div class="badge-card-header">
+                    <div class="badge-header-pattern"></div>
+                    <div class="badge-event-name">SalesConf 2024</div>
+                    <div class="badge-avatar">
+                      AK
+                      <div class="badge-verified">✓</div>
+                    </div>
+                    <div class="badge-name">Alex Kim</div>
+                    <div class="badge-title">Account Executive</div>
+                    <div class="badge-company">Salesforce · San Francisco</div>
+                  </div>
+                  <div class="badge-card-body">
+                    <div class="badge-tags">
+                      <span class="badge-tag">Enterprise Sales</span>
+                      <span class="badge-tag green">✓ Checked In</span>
+                      <span class="badge-tag">SaaS</span>
+                    </div>
+                    <div class="badge-bio">Building partnerships at the intersection of technology and business. Open to connecting with RevOps and marketing leaders.</div>
+                    <div class="badge-social">
+                      <div class="social-chip">💼 LinkedIn</div>
+                      <div class="social-chip">𝕏 @alexkim</div>
+                    </div>
+                    <div class="badge-qr-row">
+                      <div class="badge-qr">
+                        <div style="font-size:2rem">⬛</div>
+                        <div style="font-size:0.6rem;color:#94a3b8;margin-top:2px;">CVN-00142</div>
+                      </div>
+                    </div>
+                    <div class="badge-actions">
+                      <div class="badge-action">Edit Profile</div>
+                      <div class="badge-action primary">Share Badge</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-wrap">
+        <div class="phone-label">Viewing Someone's Badge</div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="badge-screen" style="background:linear-gradient(160deg,#f0fdf4 0%,#d1fae5 100%)">
+              <div class="app-header" style="background:transparent;border:none;">
+                <div class="app-header-left">
+                  <div class="back-row" style="margin:0"><span class="back-arrow">←</span> <span style="font-size:0.875rem;font-weight:600;color:#0f172a">Back to Discover</span></div>
+                </div>
+              </div>
+              <div class="badge-content">
+                <div class="badge-card">
+                  <div class="badge-card-header" style="background:linear-gradient(135deg,#10b981 0%,#059669 50%,#047857 100%)">
+                    <div class="badge-header-pattern"></div>
+                    <div class="badge-event-name">SalesConf 2024</div>
+                    <div class="badge-avatar">CR</div>
+                    <div class="badge-name">Chris Roberts</div>
+                    <div class="badge-title">Head of Enterprise Sales</div>
+                    <div class="badge-company">Gong · San Francisco</div>
+                  </div>
+                  <div class="badge-card-body">
+                    <div class="badge-tags">
+                      <span class="badge-tag">Enterprise Sales</span>
+                      <span class="badge-tag">RevOps</span>
+                      <span class="badge-tag">SaaS</span>
+                    </div>
+                    <div class="badge-bio">Building and scaling outbound teams. Always happy to talk pipeline strategy and forecasting. Let's connect!</div>
+                    <div class="badge-social">
+                      <div class="social-chip">💼 LinkedIn</div>
+                    </div>
+                    <div class="badge-qr-row">
+                      <div class="badge-qr">
+                        <div style="font-size:2rem">⬛</div>
+                        <div style="font-size:0.6rem;color:#94a3b8;margin-top:2px;">CVN-00089</div>
+                      </div>
+                    </div>
+                    <div class="badge-actions">
+                      <div class="badge-action">Message</div>
+                      <div class="badge-action primary" style="background:linear-gradient(135deg,#10b981,#059669)">Connect 💚</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCREEN: DESIGN TOKENS ── -->
+  <div id="screen-tokens" class="screen-panel">
+    <div class="panel-header">
+      <h2>Design Tokens Reference</h2>
+      <p>Color system, typography, and spacing — the building blocks of Conventionals.</p>
+    </div>
+    <div style="max-width:800px;">
+      <div class="token-section">
+        <div class="token-section-title">Color System</div>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#6366f1"><div class="swatch-name">Primary</div><div class="swatch-hex">#6366F1</div></div>
+          <div class="swatch" style="background:#4f46e5"><div class="swatch-name">Primary Dark</div><div class="swatch-hex">#4F46E5</div></div>
+          <div class="swatch" style="background:#ede9fe"><div class="swatch-name dark">Primary Light</div><div class="swatch-hex dark">#EDE9FE</div></div>
+          <div class="swatch" style="background:#10b981"><div class="swatch-name">Accent</div><div class="swatch-hex">#10B981</div></div>
+          <div class="swatch" style="background:#059669"><div class="swatch-name">Accent Dark</div><div class="swatch-hex">#059669</div></div>
+          <div class="swatch" style="background:#d1fae5"><div class="swatch-name dark">Accent Light</div><div class="swatch-hex dark">#D1FAE5</div></div>
+          <div class="swatch" style="background:#0f172a"><div class="swatch-name">Text</div><div class="swatch-hex">#0F172A</div></div>
+          <div class="swatch" style="background:#475569"><div class="swatch-name">Text 2</div><div class="swatch-hex">#475569</div></div>
+          <div class="swatch" style="background:#94a3b8"><div class="swatch-name">Text 3</div><div class="swatch-hex">#94A3B8</div></div>
+          <div class="swatch" style="background:#e2e8f0"><div class="swatch-name dark">Border</div><div class="swatch-hex dark">#E2E8F0</div></div>
+          <div class="swatch" style="background:#f8fafc"><div class="swatch-name dark">Surface</div><div class="swatch-hex dark">#F8FAFC</div></div>
+          <div class="swatch" style="background:#ffffff;border:1px solid #e2e8f0"><div class="swatch-name dark">Card</div><div class="swatch-hex dark">#FFFFFF</div></div>
+        </div>
+      </div>
+      <div class="token-section">
+        <div class="token-section-title">Typography — Plus Jakarta Sans</div>
+        <div class="font-demo">
+          <div class="font-sample-xl">The quick brown fox — Display/800</div>
+          <div class="font-sample-lg" style="margin-top:12px">Heading text sample — Heading/700</div>
+          <div class="font-sample-base">Body text for descriptions and longer-form content within the Conventionals product. Optimized for readability.</div>
+          <div class="font-sample-sm" style="margin-top:8px">LABEL / CAPTION — 600 WEIGHT · UPPERCASE</div>
+        </div>
+      </div>
+      <div class="token-section">
+        <div class="token-section-title">Spacing & Radius</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;font-size:0.75rem;color:#64748b;">Base: <strong>8px</strong></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;font-size:0.75rem;color:#64748b;">Card Radius: <strong>16-24px</strong></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;font-size:0.75rem;color:#64748b;">Button Radius: <strong>12-14px</strong></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;font-size:0.75rem;color:#64748b;">Pill Radius: <strong>999px</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showScreen(name) {
+  document.querySelectorAll('.screen-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>

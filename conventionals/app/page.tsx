@@ -19,6 +19,21 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.11 } },
 }
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  primary:      '#6366f1',
+  primaryDark:  '#4f46e5',
+  primaryLight: '#ede9fe',
+  accent:       '#10b981',
+  accentLight:  '#d1fae5',
+  text:         '#0f172a',
+  text2:        '#475569',
+  text3:        '#94a3b8',
+  border:       '#e2e8f0',
+  surface:      '#f8fafc',
+  white:        '#ffffff',
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = {
   // Nav
@@ -32,64 +47,58 @@ const s = {
     transition: 'background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease',
   } as React.CSSProperties,
   navScrolled: {
-    background: 'rgba(255,255,255,0.88)',
+    background: 'rgba(255,255,255,0.9)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
     boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
   } as React.CSSProperties,
   logo: {
-    fontSize: '19px', fontWeight: 800, color: '#4f46e5',
+    fontSize: '19px', fontWeight: 800, color: C.primaryDark,
     letterSpacing: '-0.5px', textDecoration: 'none',
   } as React.CSSProperties,
-  navLinks: {
-    display: 'flex', alignItems: 'center', gap: '28px',
-    listStyle: 'none', margin: 0, padding: 0,
-  } as React.CSSProperties,
-  navLink: {
-    color: '#374151', textDecoration: 'none',
-    fontSize: '14px', fontWeight: 500,
-    transition: 'color 0.15s',
-  } as React.CSSProperties,
   navBtnOutline: {
-    padding: '8px 18px',
-    background: 'transparent', color: '#374151',
-    border: '1.5px solid #e5e7eb',
-    borderRadius: '10px', fontSize: '14px', fontWeight: 600,
-    textDecoration: 'none', transition: 'border-color 0.15s, color 0.15s',
-  } as React.CSSProperties,
-  navBtnFilled: {
-    padding: '8px 18px',
-    background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-    color: '#fff', border: 'none',
+    padding: '9px 20px',
+    background: 'transparent', color: C.text2,
+    border: `1.5px solid ${C.border}`,
     borderRadius: '10px', fontSize: '14px', fontWeight: 600,
     textDecoration: 'none',
-    boxShadow: '0 2px 12px rgba(79,70,229,0.3)',
+    minHeight: '44px', display: 'inline-flex', alignItems: 'center',
   } as React.CSSProperties,
+  navBtnFilled: {
+    padding: '9px 20px',
+    background: `linear-gradient(135deg,${C.primaryDark},${C.primary})`,
+    color: C.white, border: 'none',
+    borderRadius: '10px', fontSize: '14px', fontWeight: 600,
+    textDecoration: 'none',
+    boxShadow: '0 2px 12px rgba(99,102,241,0.3)',
+    minHeight: '44px', display: 'inline-flex', alignItems: 'center',
+  } as React.CSSProperties,
+  navBtns: { display: 'flex', gap: '10px', alignItems: 'center' } as React.CSSProperties,
 
   // Hero
   heroWrap: {
     minHeight: '100vh',
     display: 'flex', alignItems: 'center',
     padding: '100px 40px 60px',
-    background: '#ffffff',
+    background: C.white,
     position: 'relative' as const, overflow: 'hidden',
   } as React.CSSProperties,
   blob1: {
     position: 'absolute' as const, top: '-160px', right: '-80px',
     width: '600px', height: '600px',
-    background: 'radial-gradient(circle,rgba(167,139,250,0.22) 0%,transparent 70%)',
+    background: 'radial-gradient(circle,rgba(167,139,250,0.18) 0%,transparent 70%)',
     borderRadius: '50%', pointerEvents: 'none' as const,
   } as React.CSSProperties,
   blob2: {
     position: 'absolute' as const, bottom: '-100px', left: '-100px',
     width: '500px', height: '500px',
-    background: 'radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%)',
+    background: `radial-gradient(circle,rgba(16,185,129,0.08) 0%,transparent 70%)`,
     borderRadius: '50%', pointerEvents: 'none' as const,
   } as React.CSSProperties,
   pill: {
     display: 'inline-flex', alignItems: 'center', gap: '6px',
-    background: 'linear-gradient(135deg,#ede9fe,#e0e7ff)',
-    color: '#4f46e5', borderRadius: '100px',
+    background: C.primaryLight,
+    color: C.primaryDark, borderRadius: '100px',
     padding: '5px 14px', fontSize: '12px', fontWeight: 700,
     letterSpacing: '0.6px', textTransform: 'uppercase' as const,
     marginBottom: '20px', border: '1px solid rgba(99,102,241,0.2)',
@@ -97,59 +106,115 @@ const s = {
   h1: {
     fontSize: 'clamp(38px,5.5vw,68px)',
     fontWeight: 900, lineHeight: 1.05,
-    margin: '0 0 22px', letterSpacing: '-2.5px', color: '#1e1b4b',
+    margin: '0 0 22px', letterSpacing: '-2.5px', color: C.text,
   } as React.CSSProperties,
   h1Grad: {
-    background: 'linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%)',
+    background: `linear-gradient(135deg,${C.primaryDark} 0%,${C.primary} 50%,#818cf8 100%)`,
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
   } as React.CSSProperties,
   heroSub: {
-    fontSize: '18px', color: '#6b7280', lineHeight: 1.65,
+    fontSize: '18px', color: C.text2, lineHeight: 1.65,
     margin: '0 0 36px', maxWidth: '500px',
   } as React.CSSProperties,
-  ctaRow: { display: 'flex', gap: '12px', flexWrap: 'wrap' as const, alignItems: 'center' } as React.CSSProperties,
+  ctaRow: {
+    display: 'flex', gap: '12px', flexWrap: 'wrap' as const,
+    alignItems: 'center', marginBottom: '40px',
+  } as React.CSSProperties,
   btnPrimary: {
-    padding: '14px 28px',
-    background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-    color: '#fff', border: 'none',
-    borderRadius: '12px', fontSize: '15px', fontWeight: 700,
+    padding: '15px 30px',
+    background: `linear-gradient(135deg,${C.primaryDark},${C.primary})`,
+    color: C.white, border: 'none',
+    borderRadius: '14px', fontSize: '15px', fontWeight: 700,
     cursor: 'pointer', letterSpacing: '-0.2px',
-    boxShadow: '0 4px 20px rgba(79,70,229,0.35)',
-    textDecoration: 'none', display: 'inline-block',
+    boxShadow: '0 4px 20px rgba(99,102,241,0.35)',
+    textDecoration: 'none', display: 'inline-flex', alignItems: 'center',
+    minHeight: '50px',
   } as React.CSSProperties,
   btnSecondary: {
-    padding: '13px 24px',
-    background: '#fff', color: '#4f46e5',
-    border: '1.5px solid #e0e7ff',
-    borderRadius: '12px', fontSize: '15px', fontWeight: 600,
-    cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
-  } as React.CSSProperties,
-  trustRow: {
-    marginTop: '36px', display: 'flex', alignItems: 'center',
-    gap: '10px', color: '#9ca3af', fontSize: '13px',
+    padding: '14px 26px',
+    background: C.white, color: C.primaryDark,
+    border: `1.5px solid ${C.primaryLight}`,
+    borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+    cursor: 'pointer', textDecoration: 'none',
+    display: 'inline-flex', alignItems: 'center',
+    minHeight: '50px',
   } as React.CSSProperties,
 
-  // Badge card
-  badgeCard: {
-    background: '#fff', borderRadius: '22px', padding: '24px 22px',
-    boxShadow: '0 24px 64px rgba(79,70,229,0.16),0 4px 16px rgba(0,0,0,0.06)',
-    width: '100%',
+  // Hero stats
+  heroStats: {
+    display: 'flex', gap: '16px', flexWrap: 'wrap' as const,
   } as React.CSSProperties,
-  badgeDivider: { border: 'none', borderTop: '1px solid #f3f4f6', margin: '14px 0' } as React.CSSProperties,
-  badgeName: { fontSize: '18px', fontWeight: 800, color: '#1e1b4b', marginBottom: '6px', letterSpacing: '-0.5px' } as React.CSSProperties,
-  badgeTypePill: {
-    display: 'inline-block',
-    background: 'linear-gradient(135deg,#ede9fe,#e0e7ff)',
-    color: '#5b21b6', borderRadius: '6px', padding: '3px 10px',
-    fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.5px',
+  heroStat: {
+    background: C.surface,
+    border: `1px solid ${C.border}`,
+    borderRadius: '14px', padding: '14px 20px',
+    minWidth: '90px',
+  } as React.CSSProperties,
+  heroStatNum: {
+    fontSize: '22px', fontWeight: 800, color: C.primary,
+    letterSpacing: '-0.04em', lineHeight: 1,
+  } as React.CSSProperties,
+  heroStatLabel: {
+    fontSize: '12px', color: C.text3, fontWeight: 500, marginTop: '3px',
+  } as React.CSSProperties,
+
+  // Badge card (right side)
+  badgeCard: {
+    background: C.white, borderRadius: '22px', padding: '24px 22px',
+    boxShadow: '0 24px 64px rgba(99,102,241,0.16),0 4px 16px rgba(0,0,0,0.06)',
+    width: '100%',
+    border: `1px solid ${C.border}`,
+  } as React.CSSProperties,
+  badgeCardHeader: {
+    background: `linear-gradient(135deg,${C.primaryDark},${C.primary})`,
+    borderRadius: '14px', padding: '20px',
+    marginBottom: '16px', textAlign: 'center' as const,
+    position: 'relative' as const,
+  } as React.CSSProperties,
+  badgeAvatar: {
+    width: '60px', height: '60px', borderRadius: '50%',
+    background: 'rgba(255,255,255,0.25)',
+    border: '2px solid rgba(255,255,255,0.4)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '22px', fontWeight: 800, color: C.white,
+    margin: '0 auto 10px',
+  } as React.CSSProperties,
+  badgeName: { fontSize: '18px', fontWeight: 800, color: C.white, marginBottom: '2px', letterSpacing: '-0.5px' } as React.CSSProperties,
+  badgeTitle: { fontSize: '12px', color: 'rgba(255,255,255,0.75)', marginBottom: '0' } as React.CSSProperties,
+  badgeDivider: { border: 'none', borderTop: `1px solid ${C.border}`, margin: '14px 0' } as React.CSSProperties,
+  badgeTagRow: { display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '14px' } as React.CSSProperties,
+  badgeTag: {
+    background: C.primaryLight, color: C.primaryDark,
+    borderRadius: '999px', padding: '4px 10px',
+    fontSize: '11px', fontWeight: 600,
+  } as React.CSSProperties,
+  badgeTagGreen: {
+    background: C.accentLight, color: '#059669',
+    borderRadius: '999px', padding: '4px 10px',
+    fontSize: '11px', fontWeight: 600,
+  } as React.CSSProperties,
+  badgeQrRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as React.CSSProperties,
+  badgeQr: {
+    width: '64px', height: '64px',
+    background: C.surface, borderRadius: '10px',
+    border: `1px solid ${C.border}`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '10px', color: C.text3, textAlign: 'center' as const,
   } as React.CSSProperties,
   scanBtn: {
     display: 'flex', alignItems: 'center', gap: '6px',
-    background: '#4f46e5', color: '#fff',
+    background: C.primaryDark, color: C.white,
     border: 'none', borderRadius: '8px',
-    padding: '7px 14px', fontSize: '11px', fontWeight: 600, cursor: 'default',
+    padding: '8px 14px', fontSize: '11px', fontWeight: 600, cursor: 'default',
+    minHeight: '36px',
+  } as React.CSSProperties,
+  checkedTag: {
+    display: 'inline-flex', alignItems: 'center', gap: '4px',
+    background: C.accentLight, color: '#059669',
+    borderRadius: '999px', padding: '4px 10px',
+    fontSize: '11px', fontWeight: 600,
   } as React.CSSProperties,
 
   // Section
@@ -157,66 +222,61 @@ const s = {
   sectionInner: { maxWidth: '1100px', margin: '0 auto' } as React.CSSProperties,
   sectionPill: {
     display: 'inline-block',
-    background: '#ede9fe', color: '#4f46e5',
+    background: C.primaryLight, color: C.primaryDark,
     borderRadius: '100px', padding: '4px 14px',
     fontSize: '12px', fontWeight: 700, letterSpacing: '0.5px',
     textTransform: 'uppercase' as const, marginBottom: '14px',
   } as React.CSSProperties,
   sectionTitle: {
     fontSize: 'clamp(26px,3vw,42px)', fontWeight: 800,
-    color: '#1e1b4b', margin: '0 0 14px', letterSpacing: '-1.5px', lineHeight: 1.15,
+    color: C.text, margin: '0 0 14px', letterSpacing: '-1.5px', lineHeight: 1.15,
   } as React.CSSProperties,
   sectionSub: {
-    fontSize: '17px', color: '#6b7280', margin: '0 0 60px',
+    fontSize: '17px', color: C.text2, margin: '0 0 60px',
     lineHeight: 1.65, maxWidth: '540px',
   } as React.CSSProperties,
 
   // How it works
-  howBg: { background: '#f8f7ff' } as React.CSSProperties,
+  howBg: { background: C.surface } as React.CSSProperties,
   stepCard: {
     flex: 1,
-    background: '#fff', borderRadius: '18px', padding: '28px 24px',
-    boxShadow: '0 2px 16px rgba(79,70,229,0.07)',
-    border: '1px solid rgba(209,213,219,0.5)',
+    background: C.white, borderRadius: '18px', padding: '28px 24px',
+    boxShadow: '0 2px 16px rgba(99,102,241,0.07)',
+    border: `1px solid ${C.border}`,
   } as React.CSSProperties,
   stepNum: {
     width: '44px', height: '44px', borderRadius: '50%',
-    background: 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-    color: '#fff', fontSize: '18px', fontWeight: 800,
+    background: `linear-gradient(135deg,${C.primaryDark},${C.primary})`,
+    color: C.white, fontSize: '18px', fontWeight: 800,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: '18px', flexShrink: 0,
-    boxShadow: '0 4px 14px rgba(79,70,229,0.3)',
+    boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
   } as React.CSSProperties,
-  stepIcon: {
-    width: '48px', height: '48px', borderRadius: '14px',
-    background: '#f5f3ff', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', marginBottom: '14px',
-  } as React.CSSProperties,
-  stepTitle: { fontSize: '18px', fontWeight: 700, color: '#1e1b4b', margin: '0 0 8px', letterSpacing: '-0.4px' } as React.CSSProperties,
-  stepDesc: { fontSize: '14px', color: '#6b7280', lineHeight: 1.65, margin: 0 } as React.CSSProperties,
+  stepTitle: { fontSize: '18px', fontWeight: 700, color: C.text, margin: '0 0 8px', letterSpacing: '-0.4px' } as React.CSSProperties,
+  stepDesc: { fontSize: '14px', color: C.text2, lineHeight: 1.65, margin: 0 } as React.CSSProperties,
   connector: {
     flex: '0 0 40px', height: '2px',
-    background: 'linear-gradient(90deg,#c7d2fe,#ddd6fe)',
+    background: `linear-gradient(90deg,${C.primaryLight},#ddd6fe)`,
     alignSelf: 'center', marginTop: '-60px',
   } as React.CSSProperties,
 
   // Features
   featureCard: {
-    background: '#fff', borderRadius: '18px', padding: '28px 26px',
-    boxShadow: '0 2px 16px rgba(79,70,229,0.06)',
-    border: '1px solid rgba(229,231,235,0.8)',
+    background: C.white, borderRadius: '18px', padding: '28px 26px',
+    boxShadow: '0 2px 16px rgba(99,102,241,0.06)',
+    border: `1px solid ${C.border}`,
   } as React.CSSProperties,
   featureIcon: {
     width: '48px', height: '48px', borderRadius: '13px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     marginBottom: '16px',
   } as React.CSSProperties,
-  featureTitle: { fontSize: '17px', fontWeight: 700, color: '#1e1b4b', margin: '0 0 8px', letterSpacing: '-0.3px' } as React.CSSProperties,
-  featureDesc: { fontSize: '14px', color: '#6b7280', lineHeight: 1.65, margin: 0 } as React.CSSProperties,
+  featureTitle: { fontSize: '17px', fontWeight: 700, color: C.text, margin: '0 0 8px', letterSpacing: '-0.3px' } as React.CSSProperties,
+  featureDesc: { fontSize: '14px', color: C.text2, lineHeight: 1.65, margin: 0 } as React.CSSProperties,
 
   // Stats
   statsBg: {
-    background: 'linear-gradient(135deg,#312e81 0%,#4f46e5 50%,#6d28d9 100%)',
+    background: `linear-gradient(135deg,#312e81 0%,${C.primaryDark} 50%,${C.primary} 100%)`,
     padding: '80px 40px',
   } as React.CSSProperties,
   statsInner: { maxWidth: '900px', margin: '0 auto' } as React.CSSProperties,
@@ -227,17 +287,17 @@ const s = {
     border: '1px solid rgba(255,255,255,0.18)',
     textAlign: 'center' as const,
   } as React.CSSProperties,
-  statNum: { fontSize: 'clamp(36px,4vw,52px)', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-2px' } as React.CSSProperties,
+  statNum: { fontSize: 'clamp(36px,4vw,52px)', fontWeight: 900, color: C.white, lineHeight: 1, letterSpacing: '-2px' } as React.CSSProperties,
   statLabel: { fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginTop: '8px', fontWeight: 500 } as React.CSSProperties,
 
   // CTA
-  ctaBg: { padding: '100px 40px', background: '#fff' } as React.CSSProperties,
+  ctaBg: { padding: '100px 40px', background: C.white } as React.CSSProperties,
   ctaCard: {
     maxWidth: '760px', margin: '0 auto',
-    background: 'linear-gradient(135deg,#312e81 0%,#4f46e5 60%,#7c3aed 100%)',
+    background: `linear-gradient(135deg,#312e81 0%,${C.primaryDark} 60%,${C.primary} 100%)`,
     borderRadius: '28px', padding: '64px 48px',
     textAlign: 'center' as const,
-    boxShadow: '0 24px 64px rgba(79,70,229,0.3)',
+    boxShadow: '0 24px 64px rgba(99,102,241,0.3)',
     position: 'relative' as const, overflow: 'hidden',
   } as React.CSSProperties,
   ctaGlow: {
@@ -249,373 +309,299 @@ const s = {
   ctaGlow2: {
     position: 'absolute' as const, bottom: '-80px', left: '-80px',
     width: '300px', height: '300px',
-    background: 'radial-gradient(circle,rgba(99,102,241,0.3) 0%,transparent 60%)',
+    background: 'radial-gradient(circle,rgba(16,185,129,0.2) 0%,transparent 60%)',
     borderRadius: '50%', pointerEvents: 'none' as const,
   } as React.CSSProperties,
   ctaTitle: {
     fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 900,
-    color: '#fff', margin: '0 0 14px', letterSpacing: '-1.5px', lineHeight: 1.1,
+    color: C.white, margin: '0 0 14px', letterSpacing: '-1.5px', lineHeight: 1.1,
     position: 'relative' as const,
   } as React.CSSProperties,
   ctaSub: {
     fontSize: '17px', color: 'rgba(255,255,255,0.75)',
     margin: '0 0 36px', lineHeight: 1.6, position: 'relative' as const,
   } as React.CSSProperties,
-  ctaBtn: {
+  ctaBtnRow: {
+    display: 'flex', gap: '12px', justifyContent: 'center',
+    flexWrap: 'wrap' as const, position: 'relative' as const,
+  } as React.CSSProperties,
+  ctaBtnWhite: {
     padding: '15px 34px',
-    background: '#fff', color: '#4f46e5',
+    background: C.white, color: C.primaryDark,
     border: 'none', borderRadius: '12px',
     fontSize: '16px', fontWeight: 800,
     cursor: 'pointer', letterSpacing: '-0.3px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-    position: 'relative' as const,
-    textDecoration: 'none', display: 'inline-block',
+    textDecoration: 'none', display: 'inline-flex', alignItems: 'center',
+    minHeight: '52px',
+  } as React.CSSProperties,
+  ctaBtnOutline: {
+    padding: '15px 34px',
+    background: 'transparent', color: C.white,
+    border: '1.5px solid rgba(255,255,255,0.4)',
+    borderRadius: '12px', fontSize: '16px', fontWeight: 700,
+    cursor: 'pointer', letterSpacing: '-0.3px',
+    textDecoration: 'none', display: 'inline-flex', alignItems: 'center',
+    minHeight: '52px',
   } as React.CSSProperties,
 
   // Footer
   footer: {
     padding: '32px 40px',
-    borderTop: '1px solid #f3f4f6',
+    borderTop: `1px solid ${C.border}`,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     flexWrap: 'wrap' as const, gap: '12px',
   } as React.CSSProperties,
-  footerLogo: { fontSize: '15px', fontWeight: 800, color: '#4f46e5', letterSpacing: '-0.3px', textDecoration: 'none' } as React.CSSProperties,
+  footerLogo: { fontSize: '15px', fontWeight: 800, color: C.primaryDark, letterSpacing: '-0.3px', textDecoration: 'none' } as React.CSSProperties,
   footerLinks: { display: 'flex', gap: '20px', listStyle: 'none', margin: 0, padding: 0 } as React.CSSProperties,
-  footerLink: { color: '#9ca3af', textDecoration: 'none', fontSize: '13px' } as React.CSSProperties,
-  footerCopy: { fontSize: '13px', color: '#9ca3af' } as React.CSSProperties,
+  footerLink: { color: C.text3, textDecoration: 'none', fontSize: '13px' } as React.CSSProperties,
+  footerCopy: { fontSize: '13px', color: C.text3 } as React.CSSProperties,
 }
 
 // ─── QR mockup ────────────────────────────────────────────────────────────────
 function QRMockup() {
   return (
     <svg width="110" height="110" viewBox="0 0 110 110" fill="none">
-      <rect x="8" y="8" width="32" height="32" rx="5" fill="#1e1b4b"/>
+      <rect x="8" y="8" width="32" height="32" rx="5" fill={C.text}/>
       <rect x="13" y="13" width="22" height="22" rx="3" fill="white"/>
-      <rect x="18" y="18" width="12" height="12" rx="2" fill="#1e1b4b"/>
-      <rect x="70" y="8" width="32" height="32" rx="5" fill="#1e1b4b"/>
+      <rect x="18" y="18" width="12" height="12" rx="2" fill={C.text}/>
+      <rect x="70" y="8" width="32" height="32" rx="5" fill={C.text}/>
       <rect x="75" y="13" width="22" height="22" rx="3" fill="white"/>
-      <rect x="80" y="18" width="12" height="12" rx="2" fill="#1e1b4b"/>
-      <rect x="8" y="70" width="32" height="32" rx="5" fill="#1e1b4b"/>
+      <rect x="80" y="18" width="12" height="12" rx="2" fill={C.text}/>
+      <rect x="8" y="70" width="32" height="32" rx="5" fill={C.text}/>
       <rect x="13" y="75" width="22" height="22" rx="3" fill="white"/>
-      <rect x="18" y="80" width="12" height="12" rx="2" fill="#1e1b4b"/>
-      <rect x="48" y="8" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="58" y="8" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="48" y="18" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="58" y="28" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="8" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="18" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="28" y="58" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="8" y="58" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="48" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="58" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="68" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="78" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="88" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="98" y="48" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="48" y="58" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="68" y="58" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="88" y="58" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="48" y="68" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="58" y="68" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="78" y="68" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="98" y="68" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="48" y="78" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="68" y="78" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="88" y="78" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="58" y="88" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="78" y="88" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="98" y="88" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="48" y="98" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
-      <rect x="68" y="98" width="8" height="8" rx="1.5" fill="#1e1b4b"/>
+      <rect x="18" y="80" width="12" height="12" rx="2" fill={C.text}/>
+      <rect x="48" y="8" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="48" y="20" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="8" y="48" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="20" y="48" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="48" y="48" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="60" y="48" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="72" y="48" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="84" y="48" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="96" y="48" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="48" y="60" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="60" y="60" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="72" y="60" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="84" y="60" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="48" y="72" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="60" y="72" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="72" y="84" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="84" y="84" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="96" y="72" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="48" y="84" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="60" y="96" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="84" y="96" width="8" height="8" rx="2" fill={C.primary}/>
+      <rect x="96" y="84" width="8" height="8" rx="2" fill={C.text}/>
+      <rect x="96" y="96" width="8" height="8" rx="2" fill={C.text}/>
     </svg>
   )
 }
 
-// ─── Animated section container ───────────────────────────────────────────────
-function AnimSection({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
+// ─── Badge mockup ─────────────────────────────────────────────────────────────
+function BadgeMockup() {
   return (
-    <motion.div ref={ref} initial="hidden" animate={inView ? 'visible' : 'hidden'} variants={stagger} style={style}>
-      {children}
-    </motion.div>
+    <div style={s.badgeCard}>
+      <div style={s.badgeCardHeader}>
+        <div style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
+          SalesConf 2024
+        </div>
+        <div style={s.badgeAvatar}>AK</div>
+        <div style={s.badgeName}>Alex Kim</div>
+        <div style={s.badgeTitle}>Account Executive · Salesforce</div>
+      </div>
+      <div style={s.badgeTagRow}>
+        <span style={s.badgeTag}>Enterprise Sales</span>
+        <span style={s.badgeTagGreen}>✓ Checked In</span>
+        <span style={s.badgeTag}>SaaS</span>
+      </div>
+      <hr style={s.badgeDivider} />
+      <div style={s.badgeQrRow}>
+        <div style={s.badgeQr}>
+          <QRMockup />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+          <span style={s.checkedTag}>✓ Verified</span>
+          <button style={s.scanBtn}>
+            <ScanLine size={12} />
+            Share Badge
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
 // ─── Feature card ─────────────────────────────────────────────────────────────
-function FeatureCard({ Icon, title, desc, iconBg }: { Icon: React.ElementType; title: string; desc: string; iconBg: string }) {
+function FeatureCard({ icon, title, desc, iconBg }: { icon: React.ReactNode; title: string; desc: string; iconBg: string }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
   return (
-    <motion.div
-      style={s.featureCard}
-      variants={fadeUp}
-      transition={{ duration: 0.45, ease }}
-      whileHover={{ y: -6, boxShadow: '0 12px 40px rgba(79,70,229,0.13)', transition: { duration: 0.2 } }}
-    >
-      <div style={{ ...s.featureIcon, background: iconBg }}>
-        <Icon size={22} color="#4f46e5" />
-      </div>
-      <p style={s.featureTitle}>{title}</p>
+    <motion.div ref={ref} style={s.featureCard} variants={fadeUp} initial="hidden" animate={inView ? 'visible' : 'hidden'} transition={{ duration: 0.5, ease }}>
+      <div style={{ ...s.featureIcon, background: iconBg }}>{icon}</div>
+      <div style={s.featureTitle}>{title}</div>
       <p style={s.featureDesc}>{desc}</p>
     </motion.div>
   )
 }
-
-// ─── Step card ────────────────────────────────────────────────────────────────
-function StepCard({ n, Icon, title, desc }: { n: number; Icon: React.ElementType; title: string; desc: string }) {
-  return (
-    <motion.div style={s.stepCard} variants={fadeUp} transition={{ duration: 0.45, ease }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-        <div style={s.stepNum}>{n}</div>
-        <div style={s.stepIcon}><Icon size={22} color="#4f46e5" /></div>
-      </div>
-      <p style={s.stepTitle}>{title}</p>
-      <p style={s.stepDesc}>{desc}</p>
-    </motion.div>
-  )
-}
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-const features = [
-  { Icon: Ticket,          iconBg: '#ede9fe', title: 'QR Badge Delivery',    desc: 'Generate personalised QR-coded badges and deliver them to every attendee by email automatically.' },
-  { Icon: Upload,          iconBg: '#e0f2fe', title: 'Bulk CSV Import',       desc: '500 attendees in one upload. Duplicates are skipped silently, and you get a precise report of what happened.' },
-  { Icon: ScanLine,        iconBg: '#f0fdf4', title: 'Instant QR Check-in',   desc: 'Scan badges at the door for contactless, real-time attendance tracking. No app required for attendees.' },
-  { Icon: LayoutDashboard, iconBg: '#fefce8', title: 'Live Analytics',        desc: 'Watch check-in numbers climb in real time. Total attendees, checked-in count, and attendance rate always up to date.' },
-  { Icon: Users,           iconBg: '#fdf2f8', title: 'Attendee Profiles',     desc: 'Attendees create cross-event profiles and connect with other people they meet — long after the event ends.' },
-  { Icon: ShieldCheck,     iconBg: '#f0fdf4', title: 'Secure by Default',     desc: 'Iron-session authentication, timing-safe logins, and strict ownership checks keep all data protected.' },
-]
-
-const steps = [
-  { n: 1, Icon: LayoutDashboard, title: 'Create your event',     desc: 'Give your event a name and date. Your organizer dashboard is ready in seconds — no complicated setup.' },
-  { n: 2, Icon: Upload,          title: 'Upload your CSV',        desc: 'Drop in your attendee list. We handle duplicates, skip bad rows, and badge everyone else automatically.' },
-  { n: 3, Icon: ScanLine,        title: 'Check in at the door',   desc: 'Every attendee receives a QR badge by email. Scan it on arrival for instant, accurate check-in.' },
-]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    function onScroll() { setScrolled(window.scrollY > 20) }
+    const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  function scrollTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   return (
-    <div>
-      {/* ── NAV ── */}
-      <motion.nav
-        style={{ ...s.navBase, ...(scrolled ? s.navScrolled : {}) }}
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease }}
-      >
+    <>
+      {/* ── Nav ─────────────────────────────────────────────────────────── */}
+      <nav style={{ ...s.navBase, ...(scrolled ? s.navScrolled : {}) }}>
         <Link href="/" style={s.logo}>Conventionals</Link>
-
-        <ul style={s.navLinks}>
-          <li><button onClick={() => scrollTo('features')} style={{ ...s.navLink, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Features</button></li>
-          <li><button onClick={() => scrollTo('how-it-works')} style={{ ...s.navLink, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>How It Works</button></li>
-        </ul>
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <Link href="/attendee/login" style={s.navBtnOutline}>Attendee Login</Link>
-          <Link href="/login" style={s.navBtnFilled}>Organizer Login</Link>
+        <div style={s.navBtns}>
+          <Link href="/login/select" style={s.navBtnOutline}>Log In</Link>
+          <Link href="/register" style={s.navBtnFilled}>Create Account</Link>
         </div>
-      </motion.nav>
+      </nav>
 
-      {/* ── HERO ── */}
+      {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section style={s.heroWrap}>
         <div style={s.blob1} />
         <div style={s.blob2} />
-
         <div className="hero-inner">
-          {/* Left */}
-          <div className="hero-left">
-            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease, delay: 0.1 }}>
-              <span style={s.pill}>
-                <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#4f46e5"/></svg>
-                Event badging, reimagined
-              </span>
+          <motion.div className="hero-left" variants={stagger} initial="hidden" animate="visible">
+            <motion.div style={s.pill} variants={fadeUp} transition={{ duration: 0.5, ease }}>
+              ✨ Event experiences, reinvented
             </motion.div>
-
-            <motion.h1 style={s.h1} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease, delay: 0.18 }}>
-              Run better events.<br />
-              <span style={s.h1Grad}>Build lasting connections.</span>
+            <motion.h1 style={s.h1} variants={fadeUp} transition={{ duration: 0.55, ease }}>
+              Connect, network,{' '}
+              <span style={s.h1Grad}>and grow</span>{' '}
+              at every event.
             </motion.h1>
-
-            <motion.p style={s.heroSub} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease, delay: 0.26 }}>
-              The all-in-one platform for managing events, badges, and attendee
-              connections — without the complexity.
+            <motion.p style={s.heroSub} variants={fadeUp} transition={{ duration: 0.55, ease }}>
+              The smart badge and networking platform for modern events. Organizers run it effortlessly — attendees love every moment.
             </motion.p>
-
-            <motion.div style={s.ctaRow} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease, delay: 0.34 }}>
-              <motion.div whileHover={{ scale: 1.03, boxShadow: '0 8px 28px rgba(79,70,229,0.45)' }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }}>
-                <Link href="/register" style={s.btnPrimary}>Get started free →</Link>
-              </motion.div>
-              <motion.button
-                style={s.btnSecondary}
-                onClick={() => scrollTo('how-it-works')}
-                whileHover={{ background: '#f5f3ff', borderColor: '#c7d2fe' }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-              >
-                See how it works
-              </motion.button>
+            <motion.div style={s.ctaRow} variants={fadeUp} transition={{ duration: 0.5, ease }}>
+              <Link href="/login/select" style={s.btnPrimary}>Log In</Link>
+              <Link href="/register" style={s.btnSecondary}>Create Account</Link>
             </motion.div>
-
-            <motion.div style={s.trustRow} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.55 }}>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {['#4f46e5','#7c3aed','#a855f7','#c084fc','#e879f9'].map((c, i) => (
-                  <div key={i} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: '2px solid #fff', marginLeft: i > 0 ? -8 : 0 }} />
-                ))}
+            <motion.div style={s.heroStats} variants={fadeUp} transition={{ duration: 0.5, ease }}>
+              <div style={s.heroStat}>
+                <div style={s.heroStatNum}>12k+</div>
+                <div style={s.heroStatLabel}>Events</div>
               </div>
-              <span>Trusted by event organizers worldwide</span>
-            </motion.div>
-          </div>
-
-          {/* Right — floating badge card */}
-          <div className="hero-right">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.65, ease, delay: 0.3 }}
-            >
-              <motion.div
-                animate={{ y: [0, -14, 0], rotate: [-1, 1, -1] }}
-                transition={{ duration: 4.5, ease: 'easeInOut', repeat: Infinity }}
-                style={{ willChange: 'transform' }}
-              >
-                <div style={s.badgeCard}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#4f46e5', letterSpacing: '-0.2px' }}>CONVENTIONALS</span>
-                    <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500 }}>2026</span>
-                  </div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b', marginBottom: '4px' }}>TechConf Summit</div>
-                  <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '14px' }}>April 12–14 · San Francisco</div>
-                  <hr style={s.badgeDivider} />
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
-                    <QRMockup />
-                  </div>
-                  <hr style={s.badgeDivider} />
-                  <div style={s.badgeName}>Jane Smith</div>
-                  <div style={s.badgeTypePill}>VIP Speaker</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
-                    <span style={{ fontSize: '11px', color: '#9ca3af' }}>Scan to check in</span>
-                    <div style={s.scanBtn}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                      </svg>
-                      Check in
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" style={{ ...s.sectionWrap, ...s.howBg }}>
-        <div style={s.sectionInner}>
-          <AnimSection>
-            <motion.div variants={fadeUp} transition={{ duration: 0.5, ease }} style={{ textAlign: 'center' }}>
-              <span style={s.sectionPill}>How it works</span>
-              <h2 style={{ ...s.sectionTitle, textAlign: 'center' }}>Three steps to a flawless event</h2>
-              <p style={{ ...s.sectionSub, textAlign: 'center', margin: '0 auto 60px' }}>
-                From zero to fully badged attendees in the time it takes to brew a coffee.
-              </p>
-            </motion.div>
-
-            <div className="steps-row">
-              {steps.map((step, i) => (
-                <div key={step.n} style={{ display: 'contents' }}>
-                  <StepCard {...step} />
-                  {i < steps.length - 1 && (
-                    <div className="step-connector" style={s.connector} />
-                  )}
-                </div>
-              ))}
-            </div>
-          </AnimSection>
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section id="features" style={s.sectionWrap}>
-        <div style={s.sectionInner}>
-          <AnimSection>
-            <motion.div variants={fadeUp} transition={{ duration: 0.5, ease }}>
-              <span style={s.sectionPill}>Features</span>
-              <h2 style={s.sectionTitle}>Everything you need.</h2>
-              <p style={s.sectionSub}>Nothing you don&apos;t. Built for organizers who care about getting it right.</p>
-            </motion.div>
-            <div className="features-grid">
-              {features.map((f) => <FeatureCard key={f.title} {...f} />)}
-            </div>
-          </AnimSection>
-        </div>
-      </section>
-
-      {/* ── STATS ── */}
-      <section style={s.statsBg}>
-        <div style={s.statsInner}>
-          <AnimSection>
-            <motion.div variants={fadeUp} transition={{ duration: 0.5, ease }} style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 style={{ fontSize: 'clamp(24px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 10px', letterSpacing: '-1px' }}>
-                Built for scale, designed for simplicity
-              </h2>
-              <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.65)', margin: 0 }}>
-                From intimate workshops to stadium-scale conferences
-              </p>
-            </motion.div>
-            <div className="stats-grid">
-              {[
-                { n: '10,000+', label: 'Events managed' },
-                { n: '500K+',   label: 'Badges issued' },
-                { n: '99.9%',   label: 'Email delivery rate' },
-              ].map(({ n, label }) => (
-                <motion.div key={label} style={s.statCard} variants={fadeUp} transition={{ duration: 0.45, ease }}>
-                  <div style={s.statNum}>{n}</div>
-                  <div style={s.statLabel}>{label}</div>
-                </motion.div>
-              ))}
-            </div>
-          </AnimSection>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section style={s.ctaBg}>
-        <AnimSection>
-          <motion.div style={s.ctaCard} variants={fadeUp} transition={{ duration: 0.55, ease }}>
-            <div style={s.ctaGlow} />
-            <div style={s.ctaGlow2} />
-            <p style={s.ctaTitle}>Ready to run a flawless event?</p>
-            <p style={s.ctaSub}>
-              Join event organizers who&apos;ve stopped stressing about badge logistics
-              and started focusing on what matters.
-            </p>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }}>
-              <Link href="/register" style={s.ctaBtn}>Create your first event →</Link>
+              <div style={s.heroStat}>
+                <div style={s.heroStatNum}>500k</div>
+                <div style={s.heroStatLabel}>Attendees</div>
+              </div>
+              <div style={s.heroStat}>
+                <div style={{ ...s.heroStatNum, color: C.accent }}>98%</div>
+                <div style={s.heroStatLabel}>Satisfaction</div>
+              </div>
             </motion.div>
           </motion.div>
-        </AnimSection>
+          <div className="hero-right">
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.25, ease }}
+              style={{ width: '100%' }}
+            >
+              <BadgeMockup />
+            </motion.div>
+          </div>
+        </div>
       </section>
 
-      {/* ── FOOTER ── */}
+      {/* ── Features ────────────────────────────────────────────────────── */}
+      <section style={s.sectionWrap}>
+        <div style={s.sectionInner}>
+          <div style={s.sectionPill}>Features</div>
+          <h2 style={s.sectionTitle}>Everything you need to run a great event</h2>
+          <p style={s.sectionSub}>From badge creation to real-time check-in and attendee networking — all in one place.</p>
+          <div className="features-grid">
+            <FeatureCard icon={<Ticket size={22} color={C.primary} />} iconBg={C.primaryLight} title="Digital Badges" desc="Beautiful, scannable QR badges delivered instantly to every attendee by email." />
+            <FeatureCard icon={<Upload size={22} color="#7c3aed" />} iconBg="#f5f3ff" title="CSV Bulk Import" desc="Import hundreds of attendees in seconds from your existing spreadsheet." />
+            <FeatureCard icon={<ScanLine size={22} color={C.accent} />} iconBg={C.accentLight} title="QR Check-In" desc="Scan attendees in at the door — no paper lists, no delays, no chaos." />
+            <FeatureCard icon={<LayoutDashboard size={22} color="#f59e0b" />} iconBg="#fef3c7" title="Live Dashboard" desc="Watch check-ins roll in with a real-time dashboard that updates as you go." />
+            <FeatureCard icon={<Users size={22} color={C.primary} />} iconBg={C.primaryLight} title="Attendee Networking" desc="Swipe-to-connect lets attendees discover and connect with the right people at your event." />
+            <FeatureCard icon={<ShieldCheck size={22} color={C.accent} />} iconBg={C.accentLight} title="Secure & Private" desc="Attendee data stays private. Profile visibility is always in the attendee's control." />
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ────────────────────────────────────────────────── */}
+      <section style={{ ...s.sectionWrap, ...s.howBg }}>
+        <div style={s.sectionInner}>
+          <div style={s.sectionPill}>How it works</div>
+          <h2 style={s.sectionTitle}>Up and running in minutes</h2>
+          <p style={s.sectionSub}>No training needed. No lengthy setup. Just a great event experience from day one.</p>
+          <div className="steps-row">
+            <div style={s.stepCard}>
+              <div style={s.stepNum}>1</div>
+              <div style={s.stepTitle}>Create your event</div>
+              <p style={s.stepDesc}>Set up your event details, add your capacity, and get a shareable invite link instantly.</p>
+            </div>
+            <div className="step-connector" style={s.connector} />
+            <div style={s.stepCard}>
+              <div style={s.stepNum}>2</div>
+              <div style={s.stepTitle}>Invite attendees</div>
+              <p style={s.stepDesc}>Import via CSV or share your link. Each attendee gets a digital badge delivered by email.</p>
+            </div>
+            <div className="step-connector" style={s.connector} />
+            <div style={s.stepCard}>
+              <div style={s.stepNum}>3</div>
+              <div style={s.stepTitle}>Run the event</div>
+              <p style={s.stepDesc}>Scan QR codes to check in, monitor attendance live, and watch your attendees connect.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stats ───────────────────────────────────────────────────────── */}
+      <section style={s.statsBg}>
+        <div style={s.statsInner}>
+          <div className="stats-grid">
+            {[
+              { num: '12,000+', label: 'Events hosted' },
+              { num: '500,000+', label: 'Badges delivered' },
+              { num: '98%', label: 'Organizer satisfaction' },
+            ].map(({ num, label }) => (
+              <div key={label} style={s.statCard}>
+                <div style={s.statNum}>{num}</div>
+                <div style={s.statLabel}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ─────────────────────────────────────────────────────────── */}
+      <section style={s.ctaBg}>
+        <div style={s.ctaCard}>
+          <div style={s.ctaGlow} />
+          <div style={s.ctaGlow2} />
+          <h2 style={s.ctaTitle}>Ready to run your best event yet?</h2>
+          <p style={s.ctaSub}>Join thousands of organizers who trust Conventionals to make every event memorable.</p>
+          <div style={s.ctaBtnRow}>
+            <Link href="/register" style={s.ctaBtnWhite}>Get Started Free</Link>
+            <Link href="/login/select" style={s.ctaBtnOutline}>Log In</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer style={s.footer}>
         <Link href="/" style={s.footerLogo}>Conventionals</Link>
         <ul style={s.footerLinks}>
-          <li><Link href="/login" style={s.footerLink}>Organizer Login</Link></li>
-          <li><Link href="/attendee/login" style={s.footerLink}>Attendee Login</Link></li>
-          <li><Link href="/register" style={s.footerLink}>Sign Up</Link></li>
+          <li><a href="#" style={s.footerLink}>Privacy</a></li>
+          <li><a href="#" style={s.footerLink}>Terms</a></li>
+          <li><a href="#" style={s.footerLink}>Contact</a></li>
         </ul>
         <span style={s.footerCopy}>© 2026 Conventionals</span>
       </footer>
-    </div>
+    </>
   )
 }

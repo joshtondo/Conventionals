@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const s = {
   container: {
@@ -120,6 +121,9 @@ export default function AttendeeLoginForm() {
   return (
     <div style={s.container}>
       <div style={s.card}>
+        <Link href="/login/select" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#6366f1', textDecoration: 'none', fontSize: '13px', fontWeight: 600, marginBottom: '20px' }}>
+          ← Change role
+        </Link>
         <h1 style={s.heading}>Attendee Login</h1>
         <form onSubmit={handleSubmit}>
           <div style={s.formRow}>
@@ -154,7 +158,7 @@ export default function AttendeeLoginForm() {
           </button>
           {error && <p style={s.formError}>{error}</p>}
         </form>
-        <a href="/login" style={s.link}>Organizer? Log in here →</a>
+        <Link href="/login/select" style={s.link}>Switch role? Go back to role selection →</Link>
       </div>
     </div>
   )

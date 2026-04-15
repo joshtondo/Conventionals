@@ -53,3 +53,21 @@
 - Dual-role session not mutually exclusive — a session with both `organizerId` and `attendeeAccountId` set passes both `withAuth` and `withAttendeeAuth`; mutual exclusion enforced by login handlers in Stories 1.4/1.5
 - `ttl` not aligned with `maxAge` — iron-session seal defaults to 14-day TTL while cookie expires after 8 hours; a stolen cookie remains valid server-side for 14 days; `ttl: 60 * 60 * 8` should be added in a security hardening pass
 - `path` cookie attribute not set — iron-session defaults to `path: '/'` which is correct; confirm this holds in the version in use before launch
+
+## Deferred from: QQ goal split — UX redesign sequence (2026-04-15)
+
+Goals queued after Goal 1 (home page + role-selector login flow):
+
+- **Goal 2**: Hamburger nav + app shell redesign — replace existing nav with slide-out drawer for both `(organizer)` and `(attendee)` route groups
+- **Goal 3**: Organizer dashboard — Bento grid — replace current dashboard with modular stat tiles (registered, checked-in, connections, next session)
+- **Goal 4**: Attendee swipe/discover tab — Tinder-style card deck for attendee people-browse at `/attendee/dashboard`
+- **Goal 5**: Badge page redesign — gradient card header, QR code display, social links, connect/share actions
+- **Goal 6**: QR scanner screen — camera viewport + animated scan line + manual badge-ID fallback for organizer check-in
+
+## Deferred from: QQ spec-home-page-role-selector-login-flow review (2026-04-15)
+
+- Role cards in `/login/select` have `transition` in inline styles that does nothing — hover states require a client component; add interactive hover effect when that page is converted to a client component in Goal 2 (hamburger nav / app shell)
+- `--font-sans` CSS variable name may collide with shadcn/ui's own `--font-sans` variable when shadcn is introduced in Goal 2; rename to `--font-jakarta` or use `--font-primary` before installing shadcn
+- Authenticated users visiting `/` (home page) see the full marketing page instead of being redirected to their dashboard — pre-existing behavior; add session check to `/` in a future UX polish pass
+- `/attendee/login/page.tsx` does not check for `organizerId` in session; `/register/page.tsx` does not check `attendeeAccountId` — organizers and attendees can reach each other's auth pages when already logged in; address in an auth-hardening pass
+- Dual-role session (both `organizerId` and `attendeeAccountId` set) deferred to arch-level fix (pre-existing, documented in Step 1.3 code review)
