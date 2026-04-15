@@ -2,51 +2,10 @@ import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { sessionOptions, SessionData } from '@/lib/session'
-import { getAttendeeAccount, getEventHistory } from '@/data/attendees'
-
-const s = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#f9fafb',
-    padding: '2rem',
-  } as React.CSSProperties,
-  backLink: {
-    color: '#6b7280',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    display: 'inline-block',
-    marginBottom: '1.5rem',
-  } as React.CSSProperties,
-  heading: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#111827',
-    margin: '0 0 1.25rem',
-  } as React.CSSProperties,
-  card: {
-    backgroundColor: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
-    padding: '1rem 1.5rem',
-    marginBottom: '0.75rem',
-    maxWidth: '600px',
-  } as React.CSSProperties,
-  eventName: {
-    fontWeight: '600',
-    color: '#111827',
-    margin: '0 0 0.25rem',
-    fontSize: '1rem',
-  } as React.CSSProperties,
-  eventMeta: {
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    margin: 0,
-  } as React.CSSProperties,
-  empty: {
-    color: '#6b7280',
-    fontSize: '0.875rem',
-  } as React.CSSProperties,
-}
+import { getAttendeeAccount, getEventHistory, getPublicAttendeesForEvent } from '@/data/attendees'
+import HamburgerDrawer from '@/components/HamburgerDrawer'
+import AttendeeTabView from '@/components/AttendeeTabView'
+import { DiscoverPerson } from '@/components/DiscoverDeck'
 
 export default async function AttendeeDashboardPage() {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
@@ -57,24 +16,39 @@ export default async function AttendeeDashboardPage() {
 
   const eventHistory = await getEventHistory(session.attendeeAccountId)
 
+  // Build deduped discover list from all events the attendee has attended
+  const seenIds = new Set<number>()
+  const discoverPeople: DiscoverPerson[] = []
+
+  for (const event of eventHistory) {
+    const people = await getPublicAttendeesForEvent(event.eventId, session.attendeeAccountId)
+    if (!people) continue
+    for (const person of people) {
+      if (!seenIds.has(person.id)) {
+        seenIds.add(person.id)
+        discoverPeople.push({
+          ...person,
+          sharedEventId: event.eventId,
+          sharedEventName: event.eventName,
+        })
+      }
+    }
+  }
+
   return (
-    <div style={s.container}>
-      <a href="/attendee/profile" style={s.backLink}>← Profile</a>
-      <h1 style={s.heading}>My Events</h1>
-      {eventHistory.length === 0 ? (
-        <p style={s.empty}>No events yet.</p>
-      ) : (
-        eventHistory.map((event) => (
-          <div key={event.eventId} style={s.card}>
-            <p style={s.eventName}>{event.eventName}</p>
-            <p style={s.eventMeta}>
-              {event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'TBD'}
-              {' · '}
-              {event.organizerName ?? 'Unknown organizer'}
-            </p>
-          </div>
-        ))
-      )}
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      <HamburgerDrawer variant="attendee" />
+      <main style={{
+        padding: '20px 16px 40px',
+        paddingTop: '72px',
+        maxWidth: '600px',
+        margin: '0 auto',
+      }}>
+        <AttendeeTabView
+          eventHistory={eventHistory}
+          discoverPeople={discoverPeople}
+        />
+      </main>
     </div>
   )
 }

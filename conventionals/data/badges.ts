@@ -1,6 +1,6 @@
 import 'server-only'
 import { db } from '@/lib/db'
-import { attendees, badges, events } from '@/drizzle/schema'
+import { attendees, attendeeAccounts, badges, events } from '@/drizzle/schema'
 import { eq, and, asc, sql } from 'drizzle-orm'
 import { generateQR } from '@/lib/qr'
 import { sendBadgeEmail } from '@/lib/email'
@@ -50,6 +50,31 @@ export async function checkinBadge(token: string) {
     .set({ checkedIn: true, checkedInAt: new Date().toISOString() })
     .where(eq(badges.id, badge.id))
   return { checkedIn: true }
+}
+
+export async function getBadgeWithProfile(token: string) {
+  const [row] = await db
+    .select({
+      attendeeName: attendees.name,
+      eventName: events.name,
+      token: badges.token,
+      isPublic: attendeeAccounts.isPublic,
+      socialLinks: attendeeAccounts.socialLinks,
+      bio: attendeeAccounts.bio,
+    })
+    .from(badges)
+    .innerJoin(attendees, eq(attendees.id, badges.attendeeId))
+    .innerJoin(events, eq(events.id, attendees.eventId))
+    .leftJoin(attendeeAccounts, eq(attendeeAccounts.email, attendees.email))
+    .where(eq(badges.token, token))
+  if (!row) return null
+  return {
+    attendeeName: row.attendeeName,
+    eventName: row.eventName,
+    token: row.token,
+    socialLinks: row.isPublic ? row.socialLinks : null,
+    bio: row.isPublic ? row.bio : null,
+  }
 }
 
 export async function getBadgeByToken(token: string) {

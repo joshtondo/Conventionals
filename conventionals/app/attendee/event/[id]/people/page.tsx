@@ -4,19 +4,14 @@ import { redirect, notFound } from 'next/navigation'
 import { sessionOptions, SessionData } from '@/lib/session'
 import { getPublicAttendeesForEvent } from '@/data/attendees'
 import ConnectButton from './ConnectButton'
+import HamburgerDrawer from '@/components/HamburgerDrawer'
 
 const s = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f9fafb',
     padding: '2rem',
-  } as React.CSSProperties,
-  backLink: {
-    color: '#6b7280',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    display: 'inline-block',
-    marginBottom: '1.5rem',
+    paddingTop: '72px',
   } as React.CSSProperties,
   heading: {
     fontSize: '1.25rem',
@@ -73,7 +68,7 @@ export default async function PeoplePage({ params }: { params: Promise<{ id: str
 
   return (
     <div style={s.container}>
-      <a href="/attendee/dashboard" style={s.backLink}>← My Events</a>
+      <HamburgerDrawer variant="attendee" />
       <h1 style={s.heading}>Attendees</h1>
       {people.length === 0 ? (
         <p style={s.empty}>No public attendees at this event.</p>

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import HamburgerDrawer from '@/components/HamburgerDrawer'
 
 type AttendeeRow = {
   id: number
@@ -18,13 +19,7 @@ const s = {
     minHeight: '100vh',
     backgroundColor: '#f9fafb',
     padding: '2rem',
-  } as React.CSSProperties,
-  backLink: {
-    color: '#6b7280',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    display: 'inline-block',
-    marginBottom: '1.5rem',
+    paddingTop: '72px',
   } as React.CSSProperties,
   heading: {
     fontSize: '1.5rem',
@@ -269,7 +264,7 @@ export default function UploadForm({
 
   return (
     <div style={s.container}>
-      <a href="/dashboard" style={s.backLink}>← Back to Dashboard</a>
+      <HamburgerDrawer variant="organizer" />
       <h1 style={s.heading}>{eventName}</h1>
       <div style={s.divider} />
 

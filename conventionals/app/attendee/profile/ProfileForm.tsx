@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import HamburgerDrawer from '@/components/HamburgerDrawer'
 
 type SocialLinks = { linkedin?: string; twitter?: string; website?: string } | null
 
@@ -20,13 +21,7 @@ const s = {
     minHeight: '100vh',
     backgroundColor: '#f9fafb',
     padding: '2rem',
-  } as React.CSSProperties,
-  backLink: {
-    color: '#6b7280',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    display: 'inline-block',
-    marginBottom: '1.5rem',
+    paddingTop: '72px',
   } as React.CSSProperties,
   card: {
     backgroundColor: '#ffffff',
@@ -165,7 +160,7 @@ export default function ProfileForm({ account }: { account: AccountData }) {
 
   return (
     <div style={s.container}>
-      <a href="/attendee/dashboard" style={s.backLink}>← Dashboard</a>
+      <HamburgerDrawer variant="attendee" />
       <div style={s.card}>
         <h1 style={s.heading}>My Profile</h1>
         <form onSubmit={handleSubmit}>
