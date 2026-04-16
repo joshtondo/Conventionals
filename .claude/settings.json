@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const j = require\\('jsqr'\\); console.log\\(typeof j\\)\")"
+    ]
+  }
+}

@@ -160,7 +160,7 @@ export default function ProfileForm({ account }: { account: AccountData }) {
 
   return (
     <div style={s.container}>
-      <HamburgerDrawer variant="attendee" />
+      <HamburgerDrawer variant="attendee" pageTitle="Profile" userName={account.name} />
       <div style={s.card}>
         <h1 style={s.heading}>My Profile</h1>
         <form onSubmit={handleSubmit}>

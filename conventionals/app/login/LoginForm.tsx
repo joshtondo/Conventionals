@@ -4,69 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-const s = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f9fafb',
-  } as React.CSSProperties,
-  card: {
-    backgroundColor: '#ffffff',
-    padding: '2rem',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    width: '100%',
-    maxWidth: '400px',
-  } as React.CSSProperties,
-  heading: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '1.5rem',
-    color: '#111827',
-  } as React.CSSProperties,
-  label: {
-    display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: '500',
-    marginBottom: '0.25rem',
-    color: '#374151',
-  } as React.CSSProperties,
-  input: {
-    width: '100%',
-    padding: '11px 14px',
-    background: '#f5f3ff',
-    border: '1.5px solid #ddd6fe',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    color: '#1e1b4b',
-    marginBottom: '1rem',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.15s, box-shadow 0.15s',
-  } as React.CSSProperties,
-  button: {
-    width: '100%',
-    padding: '0.625rem',
-    backgroundColor: '#4f46e5',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '1rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-  } as React.CSSProperties,
-  buttonDisabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed',
-  } as React.CSSProperties,
-  error: {
-    color: '#b91c1c',
-    fontSize: '0.875rem',
-    marginBottom: '1rem',
-  } as React.CSSProperties,
-}
-
 export default function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -102,42 +39,226 @@ export default function LoginForm() {
   }
 
   return (
-    <div style={s.container}>
-      <div style={s.card}>
-        <Link href="/login/select" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#6366f1', textDecoration: 'none', fontSize: '13px', fontWeight: 600, marginBottom: '20px' }}>
-          ← Change role
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#fff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px 16px',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '400px',
+      }}>
+        {/* Back link */}
+        <Link href="/login/select" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          color: '#6366f1',
+          textDecoration: 'none',
+          fontSize: '14px',
+          fontWeight: 600,
+          marginBottom: '28px',
+        }}>
+          ← Back
         </Link>
-        <h1 style={s.heading}>Organizer Login</h1>
-        {error && <p style={s.error}>{error}</p>}
+
+        {/* Role badge pill */}
+        <div style={{ marginBottom: '16px' }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 14px',
+            borderRadius: '999px',
+            fontSize: '12px',
+            fontWeight: 700,
+            background: '#ede9fe',
+            color: '#6366f1',
+          }}>
+            🏢 Organizer Login
+          </span>
+        </div>
+
+        {/* Heading */}
+        <h1 style={{
+          fontSize: '26px',
+          fontWeight: 800,
+          color: '#0f172a',
+          letterSpacing: '-0.03em',
+          margin: '0 0 6px',
+        }}>
+          Welcome back
+        </h1>
+        <p style={{
+          fontSize: '14px',
+          color: '#64748b',
+          margin: '0 0 28px',
+          lineHeight: 1.6,
+        }}>
+          Sign in to manage your events and attendees.
+        </p>
+
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            color: '#b91c1c',
+            fontSize: '13px',
+            marginBottom: '16px',
+          }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
-          <label style={s.label} htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            style={s.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          <label style={s.label} htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            style={s.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
+          {/* Email */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '6px',
+            }} htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              style={{
+                width: '100%',
+                padding: '13px 16px',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '15px',
+                color: '#0f172a',
+                background: '#f8fafc',
+                boxSizing: 'border-box' as const,
+                outline: 'none',
+              }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              required
+              autoComplete="email"
+            />
+          </div>
+
+          {/* Password */}
+          <div style={{ marginBottom: '6px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#374151',
+              marginBottom: '6px',
+            }} htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              style={{
+                width: '100%',
+                padding: '13px 16px',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '12px',
+                fontSize: '15px',
+                color: '#0f172a',
+                background: '#f8fafc',
+                boxSizing: 'border-box' as const,
+                outline: 'none',
+              }}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
+
+          {/* Forgot password */}
+          <div style={{ textAlign: 'right' as const, marginBottom: '20px' }}>
+            <span style={{ fontSize: '13px', color: '#6366f1', fontWeight: 600, cursor: 'pointer' }}>
+              Forgot password?
+            </span>
+          </div>
+
+          {/* Submit */}
           <button
             type="submit"
-            style={{ ...s.button, ...(loading ? s.buttonDisabled : {}) }}
             disabled={loading}
+            style={{
+              width: '100%',
+              height: '50px',
+              background: loading
+                ? '#a5b4fc'
+                : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '14px',
+              fontSize: '15px',
+              fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              boxShadow: loading ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
+              marginBottom: '20px',
+            }}
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        {/* SSO divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+          <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500, whiteSpace: 'nowrap' as const }}>
+            or continue with
+          </span>
+          <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
+        </div>
+
+        {/* Google SSO button (visual) */}
+        <button
+          type="button"
+          style={{
+            width: '100%',
+            height: '48px',
+            border: '1.5px solid #e2e8f0',
+            borderRadius: '12px',
+            background: '#fff',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#374151',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            fontFamily: 'inherit',
+            marginBottom: '24px',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+            <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        {/* Footer */}
+        <p style={{ textAlign: 'center' as const, fontSize: '13px', color: '#64748b', margin: 0 }}>
+          Don&apos;t have an account?{' '}
+          <Link href="/register" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>
+            Create account
+          </Link>
+        </p>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { redirect, notFound } from 'next/navigation'
 import { sessionOptions, SessionData } from '@/lib/session'
-import { getPublicAttendeesForEvent } from '@/data/attendees'
+import { getPublicAttendeesForEvent, getAttendeeAccount } from '@/data/attendees'
 import ConnectButton from './ConnectButton'
 import HamburgerDrawer from '@/components/HamburgerDrawer'
 
@@ -63,12 +63,15 @@ export default async function PeoplePage({ params }: { params: Promise<{ id: str
   const eventId = parseInt(id)
   if (isNaN(eventId)) notFound()
 
-  const people = await getPublicAttendeesForEvent(eventId, session.attendeeAccountId)
+  const [people, account] = await Promise.all([
+    getPublicAttendeesForEvent(eventId, session.attendeeAccountId),
+    getAttendeeAccount(session.attendeeAccountId),
+  ])
   if (people === null) notFound()
 
   return (
     <div style={s.container}>
-      <HamburgerDrawer variant="attendee" />
+      <HamburgerDrawer variant="attendee" pageTitle="Attendees" userName={account?.name ?? ''} />
       <h1 style={s.heading}>Attendees</h1>
       {people.length === 0 ? (
         <p style={s.empty}>No public attendees at this event.</p>

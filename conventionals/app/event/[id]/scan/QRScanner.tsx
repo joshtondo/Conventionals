@@ -14,10 +14,22 @@ const C = {
   white: '#ffffff',
 }
 
+const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
+
+function initials(name: string) {
+  return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
+}
+
 type ResultState =
   | { type: 'success'; name: string }
-  | { type: 'duplicate' }
+  | { type: 'duplicate'; name: string }
   | { type: 'error'; message: string }
+
+type CheckinRecord = {
+  id: number
+  name: string
+  time: Date
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -28,13 +40,15 @@ function extractToken(raw: string): string | null {
     const token = parts[parts.length - 1]
     return UUID_RE.test(token) ? token : null
   } catch {
-    // Not a URL — check if raw value itself is a UUID
     return UUID_RE.test(raw.trim()) ? raw.trim() : null
   }
 }
 
+function formatTime(d: Date) {
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function QRScanner({
-  eventId,
   eventName,
 }: {
   eventId: number
@@ -51,6 +65,8 @@ export default function QRScanner({
   const [manualToken, setManualToken] = useState('')
   const [manualError, setManualError] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
+  const [recentCheckins, setRecentCheckins] = useState<CheckinRecord[]>([])
+  const checkinCounter = useRef(0)
 
   const doCheckin = useCallback(async (token: string) => {
     if (pausedRef.current) return
@@ -67,10 +83,15 @@ export default function QRScanner({
         setResult({ type: 'error', message: 'Badge not found' })
       } else if (res.ok) {
         const data = await res.json()
+        const name = data.name ?? 'Attendee'
         if (data.alreadyCheckedIn) {
-          setResult({ type: 'duplicate' })
+          setResult({ type: 'duplicate', name })
         } else {
-          setResult({ type: 'success', name: '' })
+          setResult({ type: 'success', name })
+          setRecentCheckins(prev => [
+            { id: ++checkinCounter.current, name, time: new Date() },
+            ...prev.slice(0, 4),
+          ])
         }
       } else {
         setResult({ type: 'error', message: 'Check-in failed — try again' })
@@ -171,10 +192,10 @@ export default function QRScanner({
 
   const resultText =
     result?.type === 'success'
-      ? 'Checked in!'
+      ? `Checked in! ${result.name}`
       : result?.type === 'duplicate'
-      ? 'Already checked in'
-      : result?.message ?? 'Error'
+      ? `Already checked in${result.name ? ' · ' + result.name : ''}`
+      : (result as { type: 'error'; message: string } | null)?.message ?? 'Error'
 
   return (
     <>
@@ -185,6 +206,10 @@ export default function QRScanner({
         }
         .scan-line {
           animation: scanline 2s ease-in-out infinite;
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
@@ -207,6 +232,26 @@ export default function QRScanner({
             {eventName}
           </p>
         </div>
+
+        {/* Success banner */}
+        {result?.type === 'success' && (
+          <div style={{
+            margin: '0 20px 12px',
+            background: 'linear-gradient(135deg, #10b981, #059669)',
+            borderRadius: '16px',
+            padding: '14px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            animation: 'slideDown 0.2s ease',
+          }}>
+            <span style={{ fontSize: '28px' }}>✅</span>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: C.white }}>{result.name}</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginTop: '1px' }}>Just checked in</div>
+            </div>
+          </div>
+        )}
 
         {/* Camera viewport */}
         {!cameraError && (
@@ -276,7 +321,7 @@ export default function QRScanner({
             )}
 
             {/* Result overlay */}
-            {result && (
+            {result && result.type !== 'success' && (
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -294,6 +339,7 @@ export default function QRScanner({
                   fontWeight: 800,
                   margin: 0,
                   textAlign: 'center',
+                  padding: '0 16px',
                 }}>
                   {resultText}
                 </p>
@@ -334,12 +380,11 @@ export default function QRScanner({
 
         {/* Manual entry */}
         <div style={{
-          margin: '20px 20px 40px',
+          margin: '20px 20px 0',
           padding: '20px',
           backgroundColor: '#1e293b',
           borderRadius: '16px',
           border: '1px solid #334155',
-          flex: 1,
         }}>
           <p style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 12px' }}>
             Manual check-in
@@ -385,6 +430,63 @@ export default function QRScanner({
             </button>
           </form>
         </div>
+
+        {/* Recent check-ins */}
+        {recentCheckins.length > 0 && (
+          <div style={{
+            margin: '16px 20px 40px',
+          }}>
+            <p style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+              Recent Check-Ins
+            </p>
+            {recentCheckins.map((record, i) => (
+              <div key={record.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 12px',
+                backgroundColor: '#1e293b',
+                borderRadius: '12px',
+                border: '1px solid #334155',
+                marginBottom: '8px',
+                animation: i === 0 ? 'slideDown 0.2s ease' : undefined,
+              }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: C.white,
+                  flexShrink: 0,
+                }}>
+                  {initials(record.name)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: C.white }}>{record.name}</div>
+                  <div style={{ fontSize: '12px', color: '#94a3b8' }}>{formatTime(record.time)}</div>
+                </div>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: '999px',
+                  background: '#d1fae5',
+                  color: '#059669',
+                }}>
+                  ✓ In
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Bottom spacer when no recent checkins */}
+        {recentCheckins.length === 0 && <div style={{ height: '40px' }} />}
       </div>
     </>
   )

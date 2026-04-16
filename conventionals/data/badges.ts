@@ -1,7 +1,7 @@
 import 'server-only'
 import { db } from '@/lib/db'
 import { attendees, attendeeAccounts, badges, events } from '@/drizzle/schema'
-import { eq, and, asc, sql } from 'drizzle-orm'
+import { eq, and, asc, desc, sql } from 'drizzle-orm'
 import { generateQR } from '@/lib/qr'
 import { sendBadgeEmail } from '@/lib/email'
 
@@ -39,17 +39,18 @@ export async function createAttendeeAndBadge(
 }
 
 export async function checkinBadge(token: string) {
-  const [badge] = await db
-    .select({ id: badges.id, checkedIn: badges.checkedIn })
+  const [row] = await db
+    .select({ id: badges.id, checkedIn: badges.checkedIn, name: attendees.name })
     .from(badges)
+    .innerJoin(attendees, eq(attendees.id, badges.attendeeId))
     .where(eq(badges.token, token))
-  if (!badge) return null
-  if (badge.checkedIn) return { alreadyCheckedIn: true }
+  if (!row) return null
+  if (row.checkedIn) return { alreadyCheckedIn: true, name: row.name }
   await db
     .update(badges)
     .set({ checkedIn: true, checkedInAt: new Date().toISOString() })
-    .where(eq(badges.id, badge.id))
-  return { checkedIn: true }
+    .where(eq(badges.id, row.id))
+  return { checkedIn: true, name: row.name }
 }
 
 export async function getBadgeWithProfile(token: string) {
@@ -61,6 +62,8 @@ export async function getBadgeWithProfile(token: string) {
       isPublic: attendeeAccounts.isPublic,
       socialLinks: attendeeAccounts.socialLinks,
       bio: attendeeAccounts.bio,
+      jobTitle: attendeeAccounts.jobTitle,
+      company: attendeeAccounts.company,
     })
     .from(badges)
     .innerJoin(attendees, eq(attendees.id, badges.attendeeId))
@@ -74,6 +77,8 @@ export async function getBadgeWithProfile(token: string) {
     token: row.token,
     socialLinks: row.isPublic ? row.socialLinks : null,
     bio: row.isPublic ? row.bio : null,
+    jobTitle: row.isPublic ? row.jobTitle : null,
+    company: row.isPublic ? row.company : null,
   }
 }
 
@@ -141,6 +146,23 @@ export async function getDashboardStats(organizerId: number) {
     checkedIn: parseInt(r.checkedIn, 10),
     emailsSent: parseInt(r.emailsSent, 10),
   }))
+}
+
+export async function getRecentAttendees(organizerId: number, limit = 4) {
+  return db
+    .select({
+      id: attendees.id,
+      name: attendees.name,
+      email: attendees.email,
+      eventName: events.name,
+      checkedIn: badges.checkedIn,
+    })
+    .from(attendees)
+    .innerJoin(badges, eq(badges.attendeeId, attendees.id))
+    .innerJoin(events, eq(events.id, attendees.eventId))
+    .where(eq(events.organizerId, organizerId))
+    .orderBy(desc(attendees.createdAt))
+    .limit(limit)
 }
 
 export async function getAttendees(eventId: number, organizerId: number) {

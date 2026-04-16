@@ -29,7 +29,7 @@ export async function getOrganizerById(id: number) {
     .from(organizers)
     .where(eq(organizers.id, id))
   if (!organizer) return null
-  return { id: organizer.id, email: organizer.email, createdAt: organizer.createdAt }
+  return { id: organizer.id, name: organizer.name ?? '', email: organizer.email, createdAt: organizer.createdAt }
 }
 
 export async function createOrganizer(name: string, email: string, passwordHash: string) {

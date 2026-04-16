@@ -11,6 +11,19 @@ function initials(name: string) {
     .join('')
 }
 
+function interestChips(jobTitle: string | null, company: string | null): string[] {
+  const chips: string[] = []
+  if (jobTitle) {
+    jobTitle.split(/[\s,/]+/).slice(0, 3).forEach(w => {
+      if (w.length > 2) chips.push(w)
+    })
+  }
+  if (chips.length < 3 && company) {
+    chips.push(company.split(/\s+/)[0])
+  }
+  return chips.slice(0, 4)
+}
+
 export default async function BadgePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
   const badge = await getBadgeWithProfile(token)
@@ -21,11 +34,13 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
 
   const sl = badge.socialLinks ?? {}
   const hasSocial = sl.linkedin || sl.twitter || sl.website
+  const chips = interestChips(badge.jobTitle ?? null, badge.company ?? null)
+  const hasProfile = badge.bio || badge.jobTitle || badge.company || chips.length > 0
 
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f8fafc',
+      backgroundColor: '#f1f5f9',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -37,36 +52,62 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
         backgroundColor: '#ffffff',
         borderRadius: '24px',
         overflow: 'hidden',
-        boxShadow: '0 8px 40px rgba(99,102,241,0.12)',
+        boxShadow: '0 8px 40px rgba(99,102,241,0.14)',
         border: '1px solid #e2e8f0',
       }}>
 
-        {/* Gradient header */}
+        {/* Gradient header with dot-pattern texture */}
         <div style={{
           background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 60%, #818cf8 100%)',
-          padding: '32px 24px 28px',
+          backgroundImage: [
+            'radial-gradient(rgba(255,255,255,0.12) 1.5px, transparent 1.5px)',
+            'linear-gradient(135deg, #4f46e5 0%, #6366f1 60%, #818cf8 100%)',
+          ].join(', '),
+          backgroundSize: '22px 22px, 100% 100%',
+          padding: '36px 24px 28px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
+          position: 'relative',
         }}>
-          {/* Avatar */}
-          <div style={{
-            width: '68px',
-            height: '68px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            border: '2px solid rgba(255,255,255,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-            fontWeight: 800,
-            color: '#ffffff',
-            letterSpacing: '-0.02em',
-            marginBottom: '4px',
-          }}>
-            {initials(badge.attendeeName)}
+          {/* Avatar with verified checkmark */}
+          <div style={{ position: 'relative', marginBottom: '6px' }}>
+            <div style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              border: '2px solid rgba(255,255,255,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '26px',
+              fontWeight: 800,
+              color: '#ffffff',
+              letterSpacing: '-0.02em',
+            }}>
+              {initials(badge.attendeeName)}
+            </div>
+            {/* Verified checkmark overlay */}
+            <div style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '0',
+              width: '22px',
+              height: '22px',
+              borderRadius: '50%',
+              background: '#10b981',
+              border: '2px solid #fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              color: '#fff',
+              fontWeight: 700,
+            }}>
+              ✓
+            </div>
           </div>
 
           {/* Name */}
@@ -81,10 +122,23 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
             {badge.attendeeName}
           </p>
 
+          {/* Job title + company */}
+          {(badge.jobTitle || badge.company) && (
+            <p style={{
+              fontSize: '13px',
+              color: 'rgba(255,255,255,0.82)',
+              margin: 0,
+              textAlign: 'center',
+              fontWeight: 500,
+            }}>
+              {[badge.jobTitle, badge.company].filter(Boolean).join(' · ')}
+            </p>
+          )}
+
           {/* Event name */}
           <p style={{
-            fontSize: '13px',
-            color: 'rgba(255,255,255,0.75)',
+            fontSize: '12px',
+            color: 'rgba(255,255,255,0.65)',
             margin: 0,
             textAlign: 'center',
             fontWeight: 500,
@@ -96,13 +150,37 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
         {/* Body */}
         <div style={{ padding: '24px' }}>
 
+          {/* Interest chips */}
+          {chips.length > 0 && (
+            <div style={{
+              display: 'flex',
+              gap: '6px',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginBottom: '20px',
+            }}>
+              {chips.map((chip, i) => (
+                <span key={i} style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  padding: '4px 12px',
+                  borderRadius: '999px',
+                  background: '#ede9fe',
+                  color: '#6366f1',
+                }}>
+                  {chip}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Bio */}
           {badge.bio && (
             <p style={{
               fontSize: '14px',
               color: '#475569',
               lineHeight: 1.6,
-              margin: '0 0 20px',
+              margin: hasProfile ? '0 0 20px' : '0 0 20px',
               textAlign: 'center',
             }}>
               {badge.bio}
@@ -149,7 +227,7 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
               gap: '8px',
               flexWrap: 'wrap',
               justifyContent: 'center',
-              marginBottom: '20px',
+              marginBottom: '16px',
             }}>
               {sl.linkedin && (
                 <a href={sl.linkedin} target="_blank" rel="noopener noreferrer" style={{
@@ -196,8 +274,33 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
             </div>
           )}
 
-          {/* Share button */}
-          <BadgeShareButton badgeUrl={badgeUrl} />
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <BadgeShareButton badgeUrl={badgeUrl} />
+            </div>
+            <a
+              href="/attendee/profile"
+              style={{
+                height: '48px',
+                padding: '0 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: '14px',
+                background: '#f8fafc',
+                color: '#475569',
+                fontSize: '14px',
+                fontWeight: 600,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              Edit Profile
+            </a>
+          </div>
         </div>
       </div>
     </div>

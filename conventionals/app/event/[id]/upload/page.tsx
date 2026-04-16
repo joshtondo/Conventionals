@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import { sessionOptions, SessionData } from '@/lib/session'
 import { getEventById } from '@/data/events'
 import { getAttendees } from '@/data/badges'
+import { getOrganizerById } from '@/data/auth'
 import UploadForm from './UploadForm'
 
 export default async function UploadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,10 +15,12 @@ export default async function UploadPage({ params }: { params: Promise<{ id: str
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
   if (!session.organizerId) redirect('/login')
 
-  const event = await getEventById(eventId, session.organizerId)
+  const [event, organizer, attendeeList] = await Promise.all([
+    getEventById(eventId, session.organizerId),
+    getOrganizerById(session.organizerId),
+    getAttendees(eventId, session.organizerId),
+  ])
   if (!event) notFound()
 
-  const attendeeList = await getAttendees(eventId, session.organizerId)
-
-  return <UploadForm eventId={event.id} eventName={event.name} attendees={attendeeList} />
+  return <UploadForm eventId={event.id} eventName={event.name} attendees={attendeeList} userName={organizer?.name ?? ''} />
 }

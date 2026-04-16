@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { sessionOptions, SessionData } from '@/lib/session'
 import { getConnections } from '@/data/connections'
+import { getAttendeeAccount } from '@/data/attendees'
 import ConnectionCard from './ConnectionCard'
 import HamburgerDrawer from '@/components/HamburgerDrawer'
 
@@ -29,11 +30,14 @@ export default async function ConnectionsPage() {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
   if (!session.attendeeAccountId) redirect('/attendee/login')
 
-  const connectionsList = await getConnections(session.attendeeAccountId)
+  const [connectionsList, account] = await Promise.all([
+    getConnections(session.attendeeAccountId),
+    getAttendeeAccount(session.attendeeAccountId),
+  ])
 
   return (
     <div style={s.container}>
-      <HamburgerDrawer variant="attendee" />
+      <HamburgerDrawer variant="attendee" pageTitle="Connections" userName={account?.name ?? ''} />
       <h1 style={s.heading}>My Connections</h1>
       {connectionsList.length === 0 ? (
         <p style={s.empty}>No connections yet.</p>

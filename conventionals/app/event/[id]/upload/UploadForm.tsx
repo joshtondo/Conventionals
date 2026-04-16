@@ -159,10 +159,12 @@ export default function UploadForm({
   eventId,
   eventName,
   attendees,
+  userName = '',
 }: {
   eventId: number
   eventName: string
   attendees: AttendeeRow[]
+  userName?: string
 }) {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -264,7 +266,7 @@ export default function UploadForm({
 
   return (
     <div style={s.container}>
-      <HamburgerDrawer variant="organizer" />
+      <HamburgerDrawer variant="organizer" pageTitle={eventName} userName={userName} />
       <h1 style={s.heading}>{eventName}</h1>
       <div style={s.divider} />
 
