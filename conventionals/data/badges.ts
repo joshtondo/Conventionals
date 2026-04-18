@@ -40,17 +40,24 @@ export async function createAttendeeAndBadge(
 
 export async function checkinBadge(token: string) {
   const [row] = await db
-    .select({ id: badges.id, checkedIn: badges.checkedIn, name: attendees.name })
+    .select({
+      id: badges.id,
+      checkedIn: badges.checkedIn,
+      name: attendees.name,
+      eventName: events.name,
+      organizerId: events.organizerId,
+    })
     .from(badges)
     .innerJoin(attendees, eq(attendees.id, badges.attendeeId))
+    .innerJoin(events, eq(events.id, attendees.eventId))
     .where(eq(badges.token, token))
   if (!row) return null
-  if (row.checkedIn) return { alreadyCheckedIn: true, name: row.name }
+  if (row.checkedIn) return { alreadyCheckedIn: true, name: row.name, organizerId: row.organizerId, eventName: row.eventName }
   await db
     .update(badges)
     .set({ checkedIn: true, checkedInAt: new Date().toISOString() })
     .where(eq(badges.id, row.id))
-  return { checkedIn: true, name: row.name }
+  return { checkedIn: true, name: row.name, organizerId: row.organizerId, eventName: row.eventName }
 }
 
 export async function getBadgeWithProfile(token: string) {

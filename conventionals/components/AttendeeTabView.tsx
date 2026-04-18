@@ -176,9 +176,6 @@ export default function AttendeeTabView({
           ) : (
             connections.map((conn, i) => {
               const contactInfo = conn.contactInfo ?? {}
-              const contactLink = contactInfo.email
-                ? `mailto:${contactInfo.email}`
-                : contactInfo.linkedin ?? contactInfo.twitter ?? contactInfo.website ?? null
               return (
                 <div key={conn.id} style={{
                   backgroundColor: C.white,
@@ -230,45 +227,19 @@ export default function AttendeeTabView({
                       </div>
                     )}
                   </div>
-                  {/* Message button */}
-                  {contactLink ? (
-                    <a
-                      href={contactLink}
-                      target={contactLink.startsWith('mailto') ? undefined : '_blank'}
-                      rel="noopener noreferrer"
-                      style={{
-                        height: '36px',
-                        padding: '0 14px',
-                        background: '#ede9fe',
-                        color: C.primary,
-                        border: '1px solid #c4b5fd',
-                        borderRadius: '999px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      Message
-                    </a>
-                  ) : (
-                    <span style={{
-                      height: '36px',
-                      padding: '0 14px',
-                      background: C.surface,
-                      color: C.text3,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: '999px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexShrink: 0,
-                    }}>
-                      Connected
-                    </span>
+                  {/* Social links */}
+                  {(contactInfo.linkedin || contactInfo.twitter || contactInfo.website) && (
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                      {contactInfo.linkedin && (
+                        <a href={contactInfo.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', fontWeight: 600, padding: '4px 8px', background: '#ede9fe', color: C.primary, borderRadius: '8px', textDecoration: 'none' }}>in</a>
+                      )}
+                      {contactInfo.twitter && (
+                        <a href={contactInfo.twitter} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', fontWeight: 600, padding: '4px 8px', background: '#e0f2fe', color: '#0284c7', borderRadius: '8px', textDecoration: 'none' }}>𝕏</a>
+                      )}
+                      {contactInfo.website && (
+                        <a href={contactInfo.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', fontWeight: 600, padding: '4px 8px', background: C.surface, color: C.text2, borderRadius: '8px', textDecoration: 'none', border: `1px solid ${C.border}` }}>🌐</a>
+                      )}
+                    </div>
                   )}
                 </div>
               )

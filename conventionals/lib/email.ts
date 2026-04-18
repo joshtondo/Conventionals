@@ -149,6 +149,65 @@ export async function sendBadgeEmail({
   }
 }
 
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetUrl,
+  userType,
+}: {
+  to: string
+  name: string
+  resetUrl: string
+  userType: 'organizer' | 'attendee'
+}): Promise<boolean> {
+  const safeName = escapeHtml(name)
+  const accentColor = userType === 'organizer' ? '#4f46e5' : '#059669'
+  const accentLight = userType === 'organizer' ? '#ede9fe' : '#d1fae5'
+  const roleLabel = userType === 'organizer' ? 'Event Organizer' : 'Attendee'
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Reset your password</title></head>
+<body style="margin:0;padding:0;background:#f5f3ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f3ff;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:420px;background:#ffffff;border-radius:20px;box-shadow:0 8px 32px rgba(99,102,241,0.12);overflow:hidden;">
+        <tr><td style="background:linear-gradient(135deg,${accentColor},${accentColor}cc);padding:24px 28px;">
+          <p style="margin:0;font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.08em;text-transform:uppercase;">CONVENTIONALS · ${roleLabel}</p>
+          <p style="margin:8px 0 0;font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.02em;">Reset your password</p>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;">Hi ${safeName}, we received a request to reset your password. Click the button below — this link expires in <strong>1 hour</strong>.</p>
+          <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+            <tr><td>
+              <a href="${resetUrl}" style="display:inline-block;background:${accentColor};color:#ffffff;border-radius:10px;padding:13px 28px;font-size:14px;font-weight:700;text-decoration:none;">Reset Password →</a>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;">If you didn't request this, you can safely ignore this email.</p>
+          <p style="margin:0;font-size:12px;color:#94a3b8;">Or copy this link: <span style="color:${accentColor};word-break:break-all;">${resetUrl}</span></p>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+          <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">© 2026 Conventionals</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  try {
+    await sgMail.send({
+      to,
+      from: process.env.SENDGRID_FROM_EMAIL!,
+      subject: 'Reset your Conventionals password',
+      html,
+    })
+    return true
+  } catch (err) {
+    console.error('SendGrid password reset error:', (err as Error).message)
+    return false
+  }
+}
+
 export async function sendAnnouncementEmail({
   to,
   attendeeName,

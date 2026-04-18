@@ -1,4 +1,4 @@
-import { pgTable, index, varchar, json, jsonb, timestamp, foreignKey, unique, serial, integer, text, boolean, date, uuid } from "drizzle-orm/pg-core"
+import { pgTable, index, varchar, json, jsonb, timestamp, foreignKey, unique, serial, integer, text, boolean, date, uuid, pgEnum } from "drizzle-orm/pg-core"
 
 
 export const session = pgTable("session", {
@@ -90,4 +90,28 @@ export const connections = pgTable('connections', {
 	eventId: integer('event_id').references(() => events.id, { onDelete: 'set null' }),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+})
+
+export const resetUserTypeEnum = pgEnum('reset_user_type', ['organizer', 'attendee'])
+
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+	id: serial('id').primaryKey(),
+	userType: resetUserTypeEnum('user_type').notNull(),
+	email: text('email').notNull(),
+	token: text('token').notNull(),
+	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }).notNull(),
+	usedAt: timestamp('used_at', { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	unique('password_reset_tokens_token_key').on(table.token),
+])
+
+export const notifications = pgTable('notifications', {
+	id: serial('id').primaryKey(),
+	organizerId: integer('organizer_id').notNull().references(() => organizers.id, { onDelete: 'cascade' }),
+	type: text('type').notNull(), // 'checkin' | 'registration' | 'announcement'
+	title: text('title').notNull(),
+	message: text('message').notNull(),
+	read: boolean('read').notNull().default(false),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
 })

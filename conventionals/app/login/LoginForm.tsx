@@ -10,12 +10,6 @@ export default function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
-
-  function showToast(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 4000)
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -53,17 +47,6 @@ export default function LoginForm() {
       justifyContent: 'center',
       padding: '24px 16px',
     }}>
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-          background: '#0f172a', color: '#fff', borderRadius: '12px',
-          padding: '12px 20px', fontSize: '13px', fontWeight: 500,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.2)', zIndex: 9999,
-          maxWidth: '340px', textAlign: 'center' as const,
-        }}>
-          {toast}
-        </div>
-      )}
       <div style={{
         width: '100%',
         maxWidth: '400px',
@@ -201,13 +184,9 @@ export default function LoginForm() {
 
           {/* Forgot password */}
           <div style={{ textAlign: 'right' as const, marginBottom: '20px' }}>
-            <button
-              type="button"
-              onClick={() => showToast('Password reset is not yet available. Please contact your event organizer.')}
-              style={{ fontSize: '13px', color: '#6366f1', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', padding: 0 }}
-            >
+            <Link href="/forgot-password" style={{ fontSize: '13px', color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           {/* Submit */}
@@ -244,9 +223,8 @@ export default function LoginForm() {
         </div>
 
         {/* Google SSO button */}
-        <button
-          type="button"
-          onClick={() => showToast('Google sign-in is coming soon. Please use email and password for now.')}
+        <a
+          href="/api/auth/google"
           style={{
             width: '100%',
             height: '48px',
@@ -256,13 +234,13 @@ export default function LoginForm() {
             fontSize: '14px',
             fontWeight: 600,
             color: '#374151',
-            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '10px',
-            fontFamily: 'inherit',
+            textDecoration: 'none',
             marginBottom: '24px',
+            boxSizing: 'border-box' as const,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -272,7 +250,7 @@ export default function LoginForm() {
             <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
           </svg>
           Continue with Google
-        </button>
+        </a>
 
         {/* Footer */}
         <p style={{ textAlign: 'center' as const, fontSize: '13px', color: '#64748b', margin: 0 }}>

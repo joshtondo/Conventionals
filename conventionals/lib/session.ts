@@ -12,6 +12,7 @@ const secret: string = process.env.SESSION_SECRET
 export interface SessionData {
   organizerId?: number       // set on organizer login
   attendeeAccountId?: number // set on attendee login
+  oauthState?: string        // temporary CSRF state for Google OAuth flow
 }
 
 export const sessionOptions = {

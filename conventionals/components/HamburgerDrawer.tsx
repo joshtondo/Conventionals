@@ -87,6 +87,46 @@ export default function HamburgerDrawer({
   const [open, setOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [bellOpen, setBellOpen] = useState(false)
+  const [notifications, setNotifications] = useState<{ id: number; type: string; title: string; message: string; createdAt: string | null }[]>([])
+  const [notifLoaded, setNotifLoaded] = useState(false)
+  const unreadCount = notifLoaded ? notifications.length : 0
+
+  async function openBell() {
+    setBellOpen(v => {
+      if (!v && variant === 'organizer') {
+        fetch('/api/notifications', { credentials: 'include' })
+          .then(r => r.ok ? r.json() : [])
+          .then((data: typeof notifications) => {
+            setNotifications(data)
+            setNotifLoaded(true)
+            // Mark as read
+            if (data.length > 0) {
+              fetch('/api/notifications/read', { method: 'POST', credentials: 'include' }).catch(() => {})
+            }
+          })
+          .catch(() => setNotifLoaded(true))
+      }
+      return !v
+    })
+  }
+
+  function notifIcon(type: string) {
+    if (type === 'checkin') return '✅'
+    if (type === 'registration') return '🎟️'
+    if (type === 'announcement') return '📢'
+    return '🔔'
+  }
+
+  function timeAgo(iso: string | null) {
+    if (!iso) return ''
+    const diff = Date.now() - new Date(iso).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 1) return 'just now'
+    if (m < 60) return `${m}m ago`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h}h ago`
+    return `${Math.floor(h / 24)}d ago`
+  }
 
   const sections = variant === 'organizer' ? orgSections : attSections
   const logoutUrl = variant === 'organizer' ? '/api/auth/logout' : '/api/attendee/auth/logout'
@@ -172,7 +212,7 @@ export default function HamburgerDrawer({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setBellOpen(v => !v)}
+              onClick={openBell}
               aria-label="Notifications"
               style={{
                 width: '36px',
@@ -189,16 +229,27 @@ export default function HamburgerDrawer({
               }}
             >
               🔔
-              <div style={{
-                position: 'absolute',
-                top: '6px',
-                right: '6px',
-                width: '8px',
-                height: '8px',
-                background: '#ef4444',
-                borderRadius: '50%',
-                border: '2px solid #fff',
-              }} />
+              {(unreadCount > 0 || !notifLoaded) && (
+                <div style={{
+                  position: 'absolute',
+                  top: '6px',
+                  right: '6px',
+                  minWidth: unreadCount > 0 ? '16px' : '8px',
+                  height: unreadCount > 0 ? '16px' : '8px',
+                  background: '#ef4444',
+                  borderRadius: '50%',
+                  border: '2px solid #fff',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                }}>
+                  {unreadCount > 0 ? (unreadCount > 9 ? '9+' : unreadCount) : ''}
+                </div>
+              )}
             </button>
             {bellOpen && (
               <>
@@ -210,22 +261,44 @@ export default function HamburgerDrawer({
                   position: 'absolute',
                   top: '44px',
                   right: 0,
-                  width: '280px',
+                  width: '300px',
                   background: C.white,
                   border: `1px solid ${C.border}`,
                   borderRadius: '16px',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                   zIndex: 200,
                   overflow: 'hidden',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
                 }}>
-                  <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}` }}>
+                  <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: C.text }}>Notifications</span>
+                    {notifications.length > 0 && (
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: C.primary, background: '#ede9fe', padding: '2px 8px', borderRadius: '999px' }}>
+                        {notifications.length} new
+                      </span>
+                    )}
                   </div>
-                  <div style={{ padding: '32px 16px', textAlign: 'center' as const }}>
-                    <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
-                    <p style={{ margin: 0, fontSize: '13px', color: C.text2, fontWeight: 600 }}>All caught up!</p>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: C.text3 }}>No new notifications</p>
-                  </div>
+                  {!notifLoaded ? (
+                    <div style={{ padding: '24px 16px', textAlign: 'center' as const, color: C.text3, fontSize: '13px' }}>Loading…</div>
+                  ) : notifications.length === 0 ? (
+                    <div style={{ padding: '32px 16px', textAlign: 'center' as const }}>
+                      <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
+                      <p style={{ margin: 0, fontSize: '13px', color: C.text2, fontWeight: 600 }}>All caught up!</p>
+                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: C.text3 }}>No new notifications</p>
+                    </div>
+                  ) : (
+                    notifications.map(n => (
+                      <div key={n.id} style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }}>{notifIcon(n.type)}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: C.text, marginBottom: '1px' }}>{n.title}</div>
+                          <div style={{ fontSize: '12px', color: C.text3, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.message}</div>
+                        </div>
+                        <div style={{ fontSize: '11px', color: C.text3, flexShrink: 0, marginTop: '2px' }}>{timeAgo(n.createdAt)}</div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </>
             )}

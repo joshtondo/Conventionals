@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/session'
 import { getEventById } from '@/data/events'
 import { createAttendeeAndBadge } from '@/data/badges'
+import { createNotification } from '@/data/notifications'
 import { parse } from 'csv-parse/sync'
 
 export const maxDuration = 60
@@ -53,6 +54,14 @@ export const POST = withAuth(async (req, ctx) => {
       }
     }
 
+    if (added > 0) {
+      createNotification(
+        ctx.session.organizerId!,
+        'registration',
+        `${added} attendee${added !== 1 ? 's' : ''} registered`,
+        `for ${event.name} via CSV upload`,
+      ).catch(() => {})
+    }
     return NextResponse.json({ added, skipped }, { status: 200 })
   }
 
@@ -67,6 +76,12 @@ export const POST = withAuth(async (req, ctx) => {
 
   try {
     const result = await createAttendeeAndBadge(ctx.session.organizerId!, eventId, name, email, event.name)
+    createNotification(
+      ctx.session.organizerId!,
+      'registration',
+      `${name} registered`,
+      `for ${event.name}`,
+    ).catch(() => {})
     return NextResponse.json(result, { status: 201 })
   } catch (err) {
     const pgCode = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code

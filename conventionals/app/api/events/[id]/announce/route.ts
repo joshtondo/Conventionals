@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { attendees, events } from '@/drizzle/schema'
 import { eq, and } from 'drizzle-orm'
 import { sendAnnouncementEmail } from '@/lib/email'
+import { createNotification } from '@/data/notifications'
 
 export const POST = withAuth(async (req: NextRequest, { params, session }) => {
   const { id } = await params
@@ -53,6 +54,13 @@ export const POST = withAuth(async (req: NextRequest, { params, session }) => {
     )
     sent += results.filter(r => r.status === 'fulfilled' && r.value).length
   }
+
+  createNotification(
+    session.organizerId!,
+    'announcement',
+    `Announcement sent to ${sent} attendee${sent !== 1 ? 's' : ''}`,
+    `"${body.subject as string}" · ${event.name}`,
+  ).catch(() => {})
 
   return NextResponse.json({ sent, total: rows.length })
 })
