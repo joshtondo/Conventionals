@@ -176,7 +176,9 @@ export default function AttendeeTabView({
           ) : (
             connections.map((conn, i) => {
               const contactInfo = conn.contactInfo ?? {}
-              const mailto = contactInfo.email
+              const contactLink = contactInfo.email
+                ? `mailto:${contactInfo.email}`
+                : contactInfo.linkedin ?? contactInfo.twitter ?? contactInfo.website ?? null
               return (
                 <div key={conn.id} style={{
                   backgroundColor: C.white,
@@ -229,9 +231,11 @@ export default function AttendeeTabView({
                     )}
                   </div>
                   {/* Message button */}
-                  {mailto ? (
+                  {contactLink ? (
                     <a
-                      href={`mailto:${mailto}`}
+                      href={contactLink}
+                      target={contactLink.startsWith('mailto') ? undefined : '_blank'}
+                      rel="noopener noreferrer"
                       style={{
                         height: '36px',
                         padding: '0 14px',

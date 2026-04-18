@@ -148,3 +148,59 @@ export async function sendBadgeEmail({
     return false
   }
 }
+
+export async function sendAnnouncementEmail({
+  to,
+  attendeeName,
+  eventName,
+  subject,
+  message,
+}: {
+  to: string
+  attendeeName: string
+  eventName: string
+  subject: string
+  message: string
+}): Promise<boolean> {
+  const safeName = escapeHtml(attendeeName)
+  const safeEvent = escapeHtml(eventName)
+  const safeSubject = escapeHtml(subject)
+  const safeMessage = escapeHtml(message).replace(/\n/g, '<br>')
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>${safeSubject}</title></head>
+<body style="margin:0;padding:0;background:#f5f3ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f3ff;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:420px;background:#ffffff;border-radius:20px;box-shadow:0 8px 32px rgba(99,102,241,0.12);overflow:hidden;">
+        <tr><td style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:24px 28px;">
+          <p style="margin:0;font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.08em;text-transform:uppercase;">CONVENTIONALS</p>
+          <p style="margin:8px 0 0;font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.02em;">${safeEvent}</p>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;font-weight:500;">Hey ${safeName},</p>
+          <p style="margin:0 0 20px;font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.02em;">${safeSubject}</p>
+          <p style="margin:0;font-size:14px;color:#475569;line-height:1.7;">${safeMessage}</p>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"/>
+          <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">You received this because you&apos;re registered for ${safeEvent}.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  try {
+    await sgMail.send({
+      to,
+      from: process.env.SENDGRID_FROM_EMAIL!,
+      subject,
+      html,
+    })
+    return true
+  } catch (err) {
+    console.error('SendGrid announcement error:', (err as Error).message)
+    return false
+  }
+}

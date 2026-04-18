@@ -86,6 +86,7 @@ export default function HamburgerDrawer({
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [bellOpen, setBellOpen] = useState(false)
 
   const sections = variant === 'organizer' ? orgSections : attSections
   const logoutUrl = variant === 'organizer' ? '/api/auth/logout' : '/api/attendee/auth/logout'
@@ -169,29 +170,65 @@ export default function HamburgerDrawer({
 
         {/* Right — bell + avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            background: C.surface,
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '16px',
-            position: 'relative',
-            cursor: 'pointer',
-          }}>
-            🔔
-            <div style={{
-              position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '8px',
-              height: '8px',
-              background: '#ef4444',
-              borderRadius: '50%',
-              border: '2px solid #fff',
-            }} />
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setBellOpen(v => !v)}
+              aria-label="Notifications"
+              style={{
+                width: '36px',
+                height: '36px',
+                background: bellOpen ? '#ede9fe' : C.surface,
+                borderRadius: '10px',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                position: 'relative',
+                cursor: 'pointer',
+              }}
+            >
+              🔔
+              <div style={{
+                position: 'absolute',
+                top: '6px',
+                right: '6px',
+                width: '8px',
+                height: '8px',
+                background: '#ef4444',
+                borderRadius: '50%',
+                border: '2px solid #fff',
+              }} />
+            </button>
+            {bellOpen && (
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 150 }}
+                  onClick={() => setBellOpen(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '44px',
+                  right: 0,
+                  width: '280px',
+                  background: C.white,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: '16px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  zIndex: 200,
+                  overflow: 'hidden',
+                }}>
+                  <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}` }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: C.text }}>Notifications</span>
+                  </div>
+                  <div style={{ padding: '32px 16px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
+                    <p style={{ margin: 0, fontSize: '13px', color: C.text2, fontWeight: 600 }}>All caught up!</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: C.text3 }}>No new notifications</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div style={{
             width: '36px',

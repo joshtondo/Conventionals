@@ -10,6 +10,12 @@ export default function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 4000)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,6 +53,17 @@ export default function LoginForm() {
       justifyContent: 'center',
       padding: '24px 16px',
     }}>
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+          background: '#0f172a', color: '#fff', borderRadius: '12px',
+          padding: '12px 20px', fontSize: '13px', fontWeight: 500,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.2)', zIndex: 9999,
+          maxWidth: '340px', textAlign: 'center' as const,
+        }}>
+          {toast}
+        </div>
+      )}
       <div style={{
         width: '100%',
         maxWidth: '400px',
@@ -184,9 +201,13 @@ export default function LoginForm() {
 
           {/* Forgot password */}
           <div style={{ textAlign: 'right' as const, marginBottom: '20px' }}>
-            <span style={{ fontSize: '13px', color: '#6366f1', fontWeight: 600, cursor: 'pointer' }}>
+            <button
+              type="button"
+              onClick={() => showToast('Password reset is not yet available. Please contact your event organizer.')}
+              style={{ fontSize: '13px', color: '#6366f1', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', padding: 0 }}
+            >
               Forgot password?
-            </span>
+            </button>
           </div>
 
           {/* Submit */}
@@ -222,9 +243,10 @@ export default function LoginForm() {
           <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
         </div>
 
-        {/* Google SSO button (visual) */}
+        {/* Google SSO button */}
         <button
           type="button"
+          onClick={() => showToast('Google sign-in is coming soon. Please use email and password for now.')}
           style={{
             width: '100%',
             height: '48px',

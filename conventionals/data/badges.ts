@@ -148,6 +148,25 @@ export async function getDashboardStats(organizerId: number) {
   }))
 }
 
+export async function getAllAttendees(organizerId: number) {
+  return db
+    .select({
+      id: attendees.id,
+      name: attendees.name,
+      email: attendees.email,
+      eventId: events.id,
+      eventName: events.name,
+      checkedIn: badges.checkedIn,
+      emailSent: badges.emailSent,
+      createdAt: attendees.createdAt,
+    })
+    .from(attendees)
+    .innerJoin(badges, eq(badges.attendeeId, attendees.id))
+    .innerJoin(events, eq(events.id, attendees.eventId))
+    .where(eq(events.organizerId, organizerId))
+    .orderBy(desc(attendees.createdAt))
+}
+
 export async function getRecentAttendees(organizerId: number, limit = 4) {
   return db
     .select({

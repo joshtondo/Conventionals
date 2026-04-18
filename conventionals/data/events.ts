@@ -28,6 +28,15 @@ export async function getEventById(eventId: number, organizerId: number) {
   return event ?? null
 }
 
+export async function updateEvent(eventId: number, organizerId: number, name: string, eventDate: string | null) {
+  const [updated] = await db
+    .update(events)
+    .set({ name, eventDate })
+    .where(and(eq(events.id, eventId), eq(events.organizerId, organizerId)))
+    .returning({ id: events.id, name: events.name, eventDate: events.eventDate })
+  return updated ?? null
+}
+
 export async function deleteEvent(eventId: number, organizerId: number) {
   const result = await db
     .delete(events)
