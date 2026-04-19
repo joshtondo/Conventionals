@@ -255,7 +255,7 @@ export default function LoginForm() {
         {/* Footer */}
         <p style={{ textAlign: 'center' as const, fontSize: '13px', color: '#64748b', margin: 0 }}>
           Don&apos;t have an account?{' '}
-          <Link href="/register" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>
+          <Link href="/register/select" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>
             Create account
           </Link>
         </p>

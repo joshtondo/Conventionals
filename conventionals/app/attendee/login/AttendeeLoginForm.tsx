@@ -250,8 +250,8 @@ export default function AttendeeLoginForm() {
         {/* Footer */}
         <p style={{ textAlign: 'center' as const, fontSize: '13px', color: '#64748b', margin: 0 }}>
           Need an account?{' '}
-          <Link href="/attendee/signup" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>
-            Create one via invite link
+          <Link href="/register/select" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>
+            Create account
           </Link>
         </p>
       </div>

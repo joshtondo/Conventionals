@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/session'
 import { db } from '@/lib/db'
-import { attendees, events } from '@/drizzle/schema'
-import { eq, and } from 'drizzle-orm'
+import { attendees } from '@/drizzle/schema'
+import { eq } from 'drizzle-orm'
 import { sendAnnouncementEmail } from '@/lib/email'
 import { createNotification } from '@/data/notifications'
+import { getEventById } from '@/data/events'
 
 export const POST = withAuth(async (req: NextRequest, { params, session }) => {
   const { id } = await params
@@ -21,12 +22,10 @@ export const POST = withAuth(async (req: NextRequest, { params, session }) => {
     return NextResponse.json({ error: 'Message is required' }, { status: 400 })
   }
 
-  // Verify organizer owns this event
-  const [event] = await db
-    .select({ name: events.name, organizerId: events.organizerId })
-    .from(events)
-    .where(and(eq(events.id, eventId), eq(events.organizerId, session.organizerId!)))
-  if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+  // Verify organizer owns or co-organizes this event
+  const eventRow = await getEventById(eventId, session.organizerId!)
+  if (!eventRow) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+  const event = { name: eventRow.name }
 
   // Fetch all attendees
   const rows = await db

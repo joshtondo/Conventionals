@@ -1,7 +1,7 @@
 import 'server-only'
 import { db } from '@/lib/db'
-import { events } from '@/drizzle/schema'
-import { eq, desc, and } from 'drizzle-orm'
+import { events, eventOrganizers } from '@/drizzle/schema'
+import { eq, desc, and, or } from 'drizzle-orm'
 
 export async function getEvents(organizerId: number) {
   return db
@@ -17,15 +17,25 @@ export async function getEvents(organizerId: number) {
 }
 
 export async function getEventById(eventId: number, organizerId: number) {
-  const [event] = await db
-    .select({
-      id: events.id,
-      name: events.name,
-      eventDate: events.eventDate,
-    })
+  // Allow access if organizer is the owner OR an accepted co-organizer
+  const [owned] = await db
+    .select({ id: events.id, name: events.name, eventDate: events.eventDate })
     .from(events)
     .where(and(eq(events.id, eventId), eq(events.organizerId, organizerId)))
-  return event ?? null
+  if (owned) return { ...owned, isOwner: true }
+
+  const [coOrg] = await db
+    .select({ id: events.id, name: events.name, eventDate: events.eventDate })
+    .from(events)
+    .innerJoin(eventOrganizers, and(
+      eq(eventOrganizers.eventId, events.id),
+      eq(eventOrganizers.organizerId, organizerId),
+      eq(eventOrganizers.status, 'accepted'),
+    ))
+    .where(eq(events.id, eventId))
+  if (coOrg) return { ...coOrg, isOwner: false }
+
+  return null
 }
 
 export async function updateEvent(eventId: number, organizerId: number, name: string, eventDate: string | null) {

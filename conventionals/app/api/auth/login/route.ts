@@ -3,6 +3,7 @@ import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { sessionOptions, SessionData } from '@/lib/session'
 import { login } from '@/data/auth'
+import { linkPendingInvitesByEmail } from '@/data/eventOrganizers'
 
 export async function POST(req: NextRequest) {
   let body: { email?: unknown; password?: unknown }
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
     session.attendeeAccountId = undefined // clear any active attendee session
     session.organizerId = organizer.id
     await session.save()
+
+    // Link any pending co-organizer invites (e.g. invited before registering)
+    linkPendingInvitesByEmail(email.trim().toLowerCase(), organizer.id).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (err) {

@@ -149,6 +149,70 @@ export async function sendBadgeEmail({
   }
 }
 
+export async function sendCoOrganizerInviteEmail({
+  to,
+  invitedByName,
+  eventName,
+  dashboardUrl,
+  isNewUser,
+}: {
+  to: string
+  invitedByName: string
+  eventName: string
+  dashboardUrl: string
+  isNewUser: boolean
+}): Promise<boolean> {
+  const safeInvitedBy = escapeHtml(invitedByName)
+  const safeEvent = escapeHtml(eventName)
+  const actionLabel = isNewUser ? 'Create account & accept →' : 'View invitation →'
+  const subText = isNewUser
+    ? 'Create a Conventionals organizer account to accept this invitation.'
+    : 'Log in to your dashboard to accept or decline this invitation.'
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Co-organizer invitation</title></head>
+<body style="margin:0;padding:0;background:#f5f3ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f3ff;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:420px;background:#ffffff;border-radius:20px;box-shadow:0 8px 32px rgba(99,102,241,0.12);overflow:hidden;">
+        <tr><td style="background:linear-gradient(135deg,#4f46e5,#6366f1);padding:24px 28px;">
+          <p style="margin:0;font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:0.08em;text-transform:uppercase;">CONVENTIONALS · Co-Organizer Invitation</p>
+          <p style="margin:8px 0 0;font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.02em;">${safeEvent}</p>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <p style="margin:0 0 16px;font-size:14px;color:#475569;line-height:1.6;">
+            <strong>${safeInvitedBy}</strong> has invited you to co-organize <strong>${safeEvent}</strong> on Conventionals. As a co-organizer, you can scan attendees, manage registrations, and send announcements.
+          </p>
+          <p style="margin:0 0 8px;font-size:13px;color:#94a3b8;">${subText}</p>
+          <table cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 24px;">
+            <tr><td>
+              <a href="${dashboardUrl}" style="display:inline-block;background:#4f46e5;color:#ffffff;border-radius:10px;padding:13px 28px;font-size:14px;font-weight:700;text-decoration:none;">${actionLabel}</a>
+            </td></tr>
+          </table>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 16px;"/>
+          <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">© 2026 Conventionals</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  try {
+    await sgMail.send({
+      to,
+      from: process.env.SENDGRID_FROM_EMAIL!,
+      subject: `${invitedByName} invited you to co-organize "${eventName}"`,
+      html,
+    })
+    return true
+  } catch (err) {
+    console.error('SendGrid co-organizer invite error:', (err as Error).message)
+    return false
+  }
+}
+
 export async function sendPasswordResetEmail({
   to,
   name,

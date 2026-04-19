@@ -3,6 +3,7 @@ import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 import { sessionOptions, SessionData } from '@/lib/session'
 import { createOrganizer } from '@/data/auth'
+import { linkPendingInvitesByEmail } from '@/data/eventOrganizers'
 import bcrypt from 'bcryptjs'
 
 export async function POST(req: NextRequest) {
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const organizer = await createOrganizer(trimmedName, normalizedEmail, passwordHash)
+    // Link any pending co-organizer invites sent to this email
+    linkPendingInvitesByEmail(normalizedEmail, organizer.id).catch(() => {})
     const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
     session.attendeeAccountId = undefined // clear any active attendee session
     session.organizerId = organizer.id

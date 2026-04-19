@@ -92,6 +92,20 @@ export const connections = pgTable('connections', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 })
 
+export const eventOrganizers = pgTable('event_organizers', {
+	id: serial('id').primaryKey(),
+	eventId: integer('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }),
+	invitedEmail: text('invited_email').notNull(),
+	organizerId: integer('organizer_id').references(() => organizers.id, { onDelete: 'set null' }),
+	invitedById: integer('invited_by_id').notNull().references(() => organizers.id, { onDelete: 'cascade' }),
+	status: text('status').notNull().default('pending'), // 'pending' | 'accepted' | 'declined'
+	token: text('token').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	unique('event_organizers_token_key').on(table.token),
+	unique('event_organizers_event_email_key').on(table.eventId, table.invitedEmail),
+])
+
 export const resetUserTypeEnum = pgEnum('reset_user_type', ['organizer', 'attendee'])
 
 export const passwordResetTokens = pgTable('password_reset_tokens', {

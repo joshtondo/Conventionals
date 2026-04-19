@@ -42,6 +42,7 @@ const orgSections = [
       { label: 'Attendees', href: '/dashboard/attendees', icon: '👥' },
       { label: 'Scan Check-in', href: null, icon: '📷', hrefPrefix: '/event/' },
       { label: 'Schedule', href: '/dashboard/schedule', icon: '📅' },
+      { label: 'Shared Events', href: '/dashboard/shared', icon: '🤝' },
     ],
   },
   {
