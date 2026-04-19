@@ -130,17 +130,3 @@ export async function markInviteUsed(attendeeId: number) {
     .set({ inviteUsedAt: new Date().toISOString() })
     .where(eq(attendees.id, attendeeId))
 }
-
-/** Find an attendeeAccount by email, or create one (for Google OAuth). Returns the account id. */
-export async function upsertAttendeeFromGoogle(email: string, name: string): Promise<number> {
-  const normalizedEmail = email.trim().toLowerCase()
-  const [existing] = await db.select({ id: attendeeAccounts.id }).from(attendeeAccounts).where(eq(attendeeAccounts.email, normalizedEmail))
-  if (existing) return existing.id
-
-  const randomHash = '$2a$10$unusable_google_oauth_placeholder_hash_xxxxxxxxxxxxxxxxx'
-  const [created] = await db
-    .insert(attendeeAccounts)
-    .values({ name, email: normalizedEmail, passwordHash: randomHash })
-    .returning({ id: attendeeAccounts.id })
-  return created.id
-}

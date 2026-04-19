@@ -39,18 +39,3 @@ export async function createOrganizer(name: string, email: string, passwordHash:
     .returning({ id: organizers.id, email: organizers.email, createdAt: organizers.createdAt })
   return organizer
 }
-
-/** Find an organizer by email, or create one (for Google OAuth). Returns the organizer id. */
-export async function upsertOrganizerFromGoogle(email: string, name: string): Promise<number> {
-  const normalizedEmail = email.trim().toLowerCase()
-  const [existing] = await db.select({ id: organizers.id }).from(organizers).where(eq(organizers.email, normalizedEmail))
-  if (existing) return existing.id
-
-  // Create with a random unusable password hash
-  const randomHash = '$2a$10$unusable_google_oauth_placeholder_hash_xxxxxxxxxxxxxxxxx'
-  const [created] = await db
-    .insert(organizers)
-    .values({ name, email: normalizedEmail, passwordHash: randomHash })
-    .returning({ id: organizers.id })
-  return created.id
-}
