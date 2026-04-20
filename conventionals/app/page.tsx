@@ -462,7 +462,7 @@ export default function HomePage() {
         <Link href="/" style={s.logo}>Conventionals</Link>
         <div style={s.navBtns}>
           <Link href="/login/select" style={s.navBtnOutline}>Log In</Link>
-          <Link href="/register" style={s.navBtnFilled}>Create Account</Link>
+          <Link href="/register/select" style={s.navBtnFilled}>Create Account</Link>
         </div>
       </nav>
 
@@ -485,7 +485,7 @@ export default function HomePage() {
             </motion.p>
             <motion.div style={s.ctaRow} variants={fadeUp} transition={{ duration: 0.5, ease }}>
               <Link href="/login/select" style={s.btnPrimary}>Log In</Link>
-              <Link href="/register" style={s.btnSecondary}>Create Account</Link>
+              <Link href="/register/select" style={s.btnSecondary}>Create Account</Link>
             </motion.div>
             <motion.div style={s.heroStats} variants={fadeUp} transition={{ duration: 0.5, ease }}>
               <div style={s.heroStat}>
@@ -586,7 +586,7 @@ export default function HomePage() {
           <h2 style={s.ctaTitle}>Ready to run your best event yet?</h2>
           <p style={s.ctaSub}>Join thousands of organizers who trust Conventionals to make every event memorable.</p>
           <div style={s.ctaBtnRow}>
-            <Link href="/register" style={s.ctaBtnWhite}>Get Started Free</Link>
+            <Link href="/register/select" style={s.ctaBtnWhite}>Get Started Free</Link>
             <Link href="/login/select" style={s.ctaBtnOutline}>Log In</Link>
           </div>
         </div>
