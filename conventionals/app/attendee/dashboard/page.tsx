@@ -7,6 +7,7 @@ import { getConnections } from '@/data/connections'
 import HamburgerDrawer from '@/components/HamburgerDrawer'
 import AttendeeTabView from '@/components/AttendeeTabView'
 import { DiscoverPerson } from '@/components/DiscoverDeck'
+import AttendeeProfileBanner from '@/components/AttendeeProfileBanner'
 
 export default async function AttendeeDashboardPage() {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
@@ -48,6 +49,7 @@ export default async function AttendeeDashboardPage() {
         maxWidth: '600px',
         margin: '0 auto',
       }}>
+        {!account.bio && !account.jobTitle && !account.company && <AttendeeProfileBanner />}
         <AttendeeTabView
           eventHistory={eventHistory}
           discoverPeople={discoverPeople}

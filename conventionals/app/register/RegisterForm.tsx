@@ -28,7 +28,7 @@ export default function RegisterForm() {
         setError((data as { error?: string }).error ?? 'Registration failed')
         return
       }
-      router.push('/dashboard')
+      router.push('/onboarding/profile')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {

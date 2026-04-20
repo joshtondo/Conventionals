@@ -100,8 +100,9 @@ export default function HamburgerDrawer({
           .then((data: typeof notifications) => {
             setNotifications(data)
             setNotifLoaded(true)
-            // Mark as read
-            if (data.length > 0) {
+            // Mark non-profile-setup notifications as read — profile_setup stay until dismissed/completed
+            const nonSetup = data.filter((n: typeof notifications[0]) => n.type !== 'profile_setup')
+            if (nonSetup.length > 0) {
               fetch('/api/notifications/read', { method: 'POST', credentials: 'include' }).catch(() => {})
             }
           })
@@ -111,10 +112,17 @@ export default function HamburgerDrawer({
     })
   }
 
+  function dismissProfileSetup(id: number) {
+    fetch(`/api/notifications/${id}/dismiss`, { method: 'POST', credentials: 'include' }).catch(() => {})
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
   function notifIcon(type: string) {
     if (type === 'checkin') return '✅'
     if (type === 'registration') return '🎟️'
     if (type === 'announcement') return '📢'
+    if (type === 'profile_setup') return '👤'
+    if (type === 'invite') return '🤝'
     return '🔔'
   }
 
@@ -289,7 +297,31 @@ export default function HamburgerDrawer({
                       <p style={{ margin: '4px 0 0', fontSize: '12px', color: C.text3 }}>No new notifications</p>
                     </div>
                   ) : (
-                    notifications.map(n => (
+                    notifications.map(n => n.type === 'profile_setup' ? (
+                      <div key={n.id} style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, background: 'linear-gradient(135deg, #fafafe, #f5f3ff)' }}>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '18px', flexShrink: 0 }}>👤</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '13px', fontWeight: 600, color: C.text, marginBottom: '1px' }}>{n.title}</div>
+                            <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.4 }}>{n.message}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', paddingLeft: '28px' }}>
+                          <a href="/dashboard/profile" onClick={() => { dismissProfileSetup(n.id); setBellOpen(false) }} style={{
+                            fontSize: '12px', fontWeight: 700, color: C.white, background: C.primary,
+                            padding: '4px 12px', borderRadius: '6px', textDecoration: 'none',
+                          }}>
+                            Complete Profile →
+                          </a>
+                          <button onClick={() => dismissProfileSetup(n.id)} style={{
+                            fontSize: '12px', fontWeight: 600, color: C.text3, background: 'none',
+                            border: 'none', cursor: 'pointer', padding: '4px 8px',
+                          }}>
+                            Dismiss
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
                       <div key={n.id} style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                         <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }}>{notifIcon(n.type)}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>

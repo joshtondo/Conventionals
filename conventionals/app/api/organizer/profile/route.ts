@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { organizers } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
+import { markNotificationsByType } from '@/data/notifications'
 
 export const PATCH = withAuth(async (req: NextRequest, { session }) => {
   let body: { name?: unknown; currentPassword?: unknown; newPassword?: unknown }
@@ -37,5 +38,6 @@ export const PATCH = withAuth(async (req: NextRequest, { session }) => {
   }
 
   await db.update(organizers).set(updates).where(eq(organizers.id, session.organizerId!))
+  markNotificationsByType(session.organizerId!, 'profile_setup').catch(() => {})
   return NextResponse.json({ success: true })
 })

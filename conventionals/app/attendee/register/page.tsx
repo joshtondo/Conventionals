@@ -24,7 +24,7 @@ export default function AttendeeRegisterPage() {
         body: JSON.stringify({ name, email, password }),
       })
       if (res.ok) {
-        router.push('/attendee/dashboard')
+        router.push('/attendee/onboarding/profile')
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Registration failed')
