@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const s = {
   container: {
@@ -104,6 +105,12 @@ export default function RegisterForm() {
   return (
     <div style={s.container}>
       <div style={s.card}>
+        <Link href="/register/select" style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#6366f1',
+          textDecoration: 'none', fontSize: '14px', fontWeight: 600, marginBottom: '20px',
+        }}>
+          ← Back
+        </Link>
         <h1 style={s.heading}>Create Account</h1>
         {error && <p style={s.error}>{error}</p>}
         <form onSubmit={handleSubmit}>
