@@ -24,7 +24,34 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
   const [result, setResult] = useState<{ sent: number; total: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // AI draft state
+  const [brief, setBrief] = useState('')
+  const [drafting, setDrafting] = useState(false)
+  const [draftError, setDraftError] = useState<string | null>(null)
+
   const selectedEvent = events.find(e => e.id === selectedEventId)
+
+  async function handleDraft() {
+    if (!brief.trim()) return
+    setDrafting(true)
+    setDraftError(null)
+    try {
+      const res = await fetch('/api/ai/draft-announcement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ eventName: selectedEvent?.name ?? '', brief: brief.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setDraftError(data.error ?? 'Draft failed — try again'); return }
+      setSubject(data.subject)
+      setMessage(data.message)
+    } catch {
+      setDraftError('Network error — please try again')
+    } finally {
+      setDrafting(false)
+    }
+  }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
@@ -44,6 +71,7 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
         setResult(data)
         setSubject('')
         setMessage('')
+        setBrief('')
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Failed to send announcement')
@@ -90,13 +118,8 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
       {result && (
         <div style={{
           background: 'linear-gradient(135deg, #10b981, #059669)',
-          borderRadius: '14px',
-          padding: '16px 20px',
-          marginBottom: '20px',
-          color: C.white,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
+          borderRadius: '14px', padding: '16px 20px', marginBottom: '20px',
+          color: C.white, display: 'flex', alignItems: 'center', gap: '12px',
         }}>
           <span style={{ fontSize: '24px' }}>✅</span>
           <div>
@@ -108,11 +131,73 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
         </div>
       )}
 
+      {/* AI Draft Assistant */}
       <div style={{
         backgroundColor: C.white,
-        border: `1px solid ${C.border}`,
+        border: `1.5px solid #c7d2fe`,
         borderRadius: '16px',
         padding: '20px',
+        marginBottom: '16px',
+        background: 'linear-gradient(135deg, #fafafe 0%, #f5f3ff 100%)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <span style={{ fontSize: '18px' }}>✨</span>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: C.primary }}>Draft with AI</span>
+          <span style={{
+            fontSize: '11px', fontWeight: 700, padding: '2px 8px',
+            borderRadius: '999px', background: '#ede9fe', color: '#7c3aed',
+          }}>Beta</span>
+        </div>
+        <p style={{ fontSize: '13px', color: C.text2, margin: '0 0 12px', lineHeight: 1.5 }}>
+          Describe what you want to announce in plain language — AI will write a polished subject and message for you to edit.
+        </p>
+        <textarea
+          value={brief}
+          onChange={e => { setBrief(e.target.value); setDraftError(null) }}
+          placeholder={`e.g. "Lunch break moved to 12:30, catering in the east hall, vegetarian options available"`}
+          rows={3}
+          style={{
+            ...inputStyle,
+            resize: 'vertical' as const,
+            marginBottom: '10px',
+            background: '#fff',
+            border: `1.5px solid #ddd6fe`,
+          }}
+        />
+        {draftError && (
+          <p style={{ fontSize: '13px', color: C.danger, margin: '0 0 8px' }}>{draftError}</p>
+        )}
+        <button
+          type="button"
+          onClick={handleDraft}
+          disabled={drafting || !brief.trim()}
+          style={{
+            height: '40px',
+            padding: '0 20px',
+            background: drafting || !brief.trim()
+              ? '#e0e7ff'
+              : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+            color: drafting || !brief.trim() ? '#a5b4fc' : C.white,
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 700,
+            cursor: drafting || !brief.trim() ? 'not-allowed' : 'pointer',
+            boxShadow: drafting || !brief.trim() ? 'none' : '0 2px 8px rgba(99,102,241,0.25)',
+          }}
+        >
+          {drafting ? '✨ Drafting…' : '✨ Generate Draft'}
+        </button>
+        {(subject || message) && !drafting && (
+          <p style={{ fontSize: '12px', color: '#7c3aed', marginTop: '10px', margin: '10px 0 0' }}>
+            Draft filled below — review and edit before sending.
+          </p>
+        )}
+      </div>
+
+      {/* Compose form */}
+      <div style={{
+        backgroundColor: C.white, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '20px',
       }}>
         <form onSubmit={handleSend}>
           {/* Event selector */}
@@ -136,13 +221,8 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
           {/* Recipient count info */}
           {selectedEvent && (
             <div style={{
-              background: '#ede9fe',
-              borderRadius: '10px',
-              padding: '10px 14px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
+              background: '#ede9fe', borderRadius: '10px', padding: '10px 14px',
+              marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px',
             }}>
               <span style={{ fontSize: '16px' }}>📢</span>
               <span style={{ fontSize: '13px', color: C.primary, fontWeight: 600 }}>
@@ -172,11 +252,7 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
               id="ann-message"
               value={message}
               onChange={e => setMessage(e.target.value)}
-              style={{
-                ...inputStyle,
-                minHeight: '140px',
-                resize: 'vertical' as const,
-              }}
+              style={{ ...inputStyle, minHeight: '140px', resize: 'vertical' as const }}
               required
               placeholder="Write your announcement here…"
             />
@@ -190,14 +266,10 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
             type="submit"
             disabled={sending || !selectedEventId}
             style={{
-              height: '48px',
-              padding: '0 24px',
+              height: '48px', padding: '0 24px',
               background: sending ? '#a5b4fc' : 'linear-gradient(135deg, #6366f1, #4f46e5)',
-              color: C.white,
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '15px',
-              fontWeight: 700,
+              color: C.white, border: 'none', borderRadius: '12px',
+              fontSize: '15px', fontWeight: 700,
               cursor: sending ? 'not-allowed' : 'pointer',
               boxShadow: sending ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
             }}
@@ -209,11 +281,8 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
 
       {/* Tips */}
       <div style={{
-        backgroundColor: C.white,
-        border: `1px solid ${C.border}`,
-        borderRadius: '16px',
-        padding: '16px 20px',
-        marginTop: '16px',
+        backgroundColor: C.white, border: `1px solid ${C.border}`, borderRadius: '16px',
+        padding: '16px 20px', marginTop: '16px',
       }}>
         <p style={{ fontSize: '12px', fontWeight: 700, color: C.text3, textTransform: 'uppercase' as const, letterSpacing: '0.06em', margin: '0 0 8px' }}>
           Tips
