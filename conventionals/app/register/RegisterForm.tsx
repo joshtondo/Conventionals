@@ -4,69 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-const s = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f9fafb',
-  } as React.CSSProperties,
-  card: {
-    backgroundColor: '#ffffff',
-    padding: '2rem',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    width: '100%',
-    maxWidth: '400px',
-  } as React.CSSProperties,
-  heading: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '1.5rem',
-    color: '#111827',
-  } as React.CSSProperties,
-  label: {
-    display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: '500',
-    marginBottom: '0.25rem',
-    color: '#374151',
-  } as React.CSSProperties,
-  input: {
-    width: '100%',
-    padding: '11px 14px',
-    background: '#f5f3ff',
-    border: '1.5px solid #ddd6fe',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    color: '#1e1b4b',
-    marginBottom: '1rem',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.15s, box-shadow 0.15s',
-  } as React.CSSProperties,
-  button: {
-    width: '100%',
-    padding: '0.625rem',
-    backgroundColor: '#4f46e5',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '1rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-  } as React.CSSProperties,
-  buttonDisabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed',
-  } as React.CSSProperties,
-  error: {
-    color: '#b91c1c',
-    fontSize: '0.875rem',
-    marginBottom: '1rem',
-  } as React.CSSProperties,
-}
-
 export default function RegisterForm() {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -79,7 +16,6 @@ export default function RegisterForm() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -87,13 +23,11 @@ export default function RegisterForm() {
         credentials: 'include',
         body: JSON.stringify({ name, email, password }),
       })
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError((data as { error?: string }).error ?? 'Registration failed')
         return
       }
-
       router.push('/dashboard')
     } catch {
       setError('Something went wrong. Please try again.')
@@ -102,56 +36,65 @@ export default function RegisterForm() {
     }
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '13px 16px', border: '1.5px solid #e2e8f0',
+    borderRadius: '12px', fontSize: '15px', color: '#0f172a', background: '#f8fafc',
+    boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
+  }
+
   return (
-    <div style={s.container}>
-      <div style={s.card}>
-        <Link href="/register/select" style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#6366f1',
-          textDecoration: 'none', fontSize: '14px', fontWeight: 600, marginBottom: '20px',
-        }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <Link href="/register/select" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#6366f1', textDecoration: 'none', fontSize: '14px', fontWeight: 600, marginBottom: '28px' }}>
           ← Back
         </Link>
-        <h1 style={s.heading}>Create Account</h1>
-        {error && <p style={s.error}>{error}</p>}
+
+        <div style={{ marginBottom: '16px' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: '#ede9fe', color: '#6366f1' }}>
+            🏢 Organizer Account
+          </span>
+        </div>
+
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', margin: '0 0 6px' }}>Create your account</h1>
+        <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 28px', lineHeight: 1.6 }}>
+          Set up your organizer account to create events and manage attendees.
+        </p>
+
+        {error && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', padding: '10px 14px', color: '#b91c1c', fontSize: '13px', marginBottom: '16px' }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
-          <label style={s.label} htmlFor="name">Name</label>
-          <input
-            id="name"
-            type="text"
-            style={s.input}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            autoComplete="name"
-          />
-          <label style={s.label} htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            style={s.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          <label style={s.label} htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            style={s.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
-          <button
-            type="submit"
-            style={{ ...s.button, ...(loading ? s.buttonDisabled : {}) }}
-            disabled={loading}
-          >
-            {loading ? 'Creating account…' : 'Create Account'}
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }} htmlFor="name">Full Name</label>
+            <input id="name" type="text" value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Alex Johnson" required autoComplete="name" />
+          </div>
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }} htmlFor="email">Email</label>
+            <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} placeholder="you@company.com" required autoComplete="email" />
+          </div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }} htmlFor="password">Password</label>
+            <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} placeholder="At least 8 characters" required autoComplete="new-password" />
+          </div>
+
+          <button type="submit" disabled={loading} style={{
+            width: '100%', height: '50px',
+            background: loading ? '#a5b4fc' : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+            color: '#fff', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: 700,
+            cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 4px 12px rgba(99,102,241,0.3)',
+            marginBottom: '20px',
+          }}>
+            {loading ? 'Creating account…' : 'Create Organizer Account'}
           </button>
         </form>
+
+        <p style={{ textAlign: 'center' as const, fontSize: '13px', color: '#64748b', margin: 0 }}>
+          Already have an account?{' '}
+          <Link href="/login/select" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+        </p>
       </div>
     </div>
   )
