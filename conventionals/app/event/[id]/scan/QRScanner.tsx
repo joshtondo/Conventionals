@@ -125,7 +125,7 @@ export default function QRScanner({
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'dontInvert',
+          inversionAttempts: 'attemptBoth',
         })
         if (code) {
           const token = extractToken(code.data)
@@ -149,9 +149,13 @@ export default function QRScanner({
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
         })
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.play()
+        const video = videoRef.current
+        if (video) {
+          video.srcObject = stream
+          await new Promise<void>((resolve) => {
+            video.onloadedmetadata = () => resolve()
+          })
+          await video.play()
           setCameraReady(true)
           startScanLoop()
         }
