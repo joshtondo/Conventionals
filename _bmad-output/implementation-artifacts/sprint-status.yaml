@@ -1,0 +1,108 @@
+# generated: 2026-04-03
+# last_updated: 2026-04-06
+# project: Conventionals
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-04-03
+last_updated: 2026-04-06
+project: Conventionals
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+
+  # ─────────────────────────────────────────────────────────
+  # Epic 1: Working Application — Auth & Infrastructure
+  # ─────────────────────────────────────────────────────────
+  epic-1: in-progress
+  1-1-project-initialization-and-vercel-deployment: done
+  1-2-database-connection-and-schema: done
+  1-3-session-configuration-and-auth-hof: done
+  1-4-organizer-login: done
+  1-5-organizer-logout-and-protected-dashboard-shell: done
+  1-6-organizer-registration: done
+  1-7-marketing-landing-page: done
+  epic-1-retrospective: optional
+
+  # ─────────────────────────────────────────────────────────
+  # Epic 2: Event Management
+  # ─────────────────────────────────────────────────────────
+  epic-2: in-progress
+  2-1-event-list-on-dashboard: review
+  2-2-create-event: review
+  2-3-delete-event: review
+  epic-2-retrospective: optional
+
+  # ─────────────────────────────────────────────────────────
+  # Epic 3: Attendee Registration & Badge Delivery
+  # ─────────────────────────────────────────────────────────
+  epic-3: in-progress
+  3-1-upload-page-and-navigation: review
+  3-2-manual-attendee-add: review
+  3-3-qr-code-generation: review
+  3-4-badge-email-with-invite-link: review
+  3-5-csv-bulk-upload: review
+  epic-3-retrospective: optional
+
+  # ─────────────────────────────────────────────────────────
+  # Epic 4: Check-in, Resend & Attendance Tracking
+  # ─────────────────────────────────────────────────────────
+  epic-4: in-progress
+  4-1-public-badge-page: review
+  4-2-qr-scan-check-in: review
+  4-3-badge-email-resend: review
+  4-4-dashboard-attendance-stats: review
+  epic-4-retrospective: optional
+
+  # ─────────────────────────────────────────────────────────
+  # Epic 5: Attendee Accounts & Profiles
+  # ─────────────────────────────────────────────────────────
+  epic-5: in-progress
+  5-1-attendee-account-schema-and-withattendeeauth-hof: review
+  5-2-account-creation-via-invite-link: review
+  5-3-attendee-login-and-logout: review
+  5-4-profile-editing: review
+  5-5-profile-visibility-toggle: review
+  epic-5-retrospective: optional
+
+  # ─────────────────────────────────────────────────────────
+  # Epic 6: Event History & Connections
+  # ─────────────────────────────────────────────────────────
+  epic-6: backlog
+  6-1-attendee-dashboard-and-event-history: review
+  6-2-browse-public-attendees-at-an-event: review
+  6-3-connect-with-an-attendee: review
+  6-4-connections-list-and-notes: review
+  epic-6-retrospective: optional
