@@ -85,12 +85,15 @@ export default function AttendeeTabView({
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
   const [requestsLoaded, setRequestsLoaded] = useState(false)
   const [respondingId, setRespondingId] = useState<number | null>(null)
+  const [respondError, setRespondError] = useState<string | null>(null)
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [requestedIds, setRequestedIds] = useState<Set<number>>(new Set())
+  const [requestErrors, setRequestErrors] = useState<Record<number, string>>({})
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function switchTab(t: Tab) {
@@ -118,6 +121,7 @@ export default function AttendeeTabView({
 
   async function respond(requestId: number, accept: boolean) {
     setRespondingId(requestId)
+    setRespondError(null)
     try {
       const res = await fetch(`/api/attendee/connections/requests/${requestId}`, {
         method: 'POST',
@@ -126,8 +130,13 @@ export default function AttendeeTabView({
         body: JSON.stringify({ accept }),
       })
       if (res.ok) {
+        // Only remove from list once server confirms — prevents ghost state on failure
         setPendingRequests(prev => prev.filter(r => r.id !== requestId))
+      } else {
+        setRespondError('Something went wrong — please try again.')
       }
+    } catch {
+      setRespondError('Network error — please try again.')
     } finally {
       setRespondingId(null)
     }
@@ -135,13 +144,20 @@ export default function AttendeeTabView({
 
   function handleSearchInput(q: string) {
     setSearchQuery(q)
+    setSearchError(null)
     if (searchTimer.current) clearTimeout(searchTimer.current)
     if (q.trim().length < 2) { setSearchResults([]); return }
     searchTimer.current = setTimeout(async () => {
       setSearching(true)
       try {
         const res = await fetch(`/api/attendee/people/search?q=${encodeURIComponent(q)}`, { credentials: 'include' })
-        if (res.ok) setSearchResults(await res.json())
+        if (res.ok) {
+          setSearchResults(await res.json())
+        } else {
+          setSearchError('Search failed — please try again.')
+        }
+      } catch {
+        setSearchError('Network error — please try again.')
       } finally {
         setSearching(false)
       }
@@ -149,14 +165,21 @@ export default function AttendeeTabView({
   }
 
   async function sendRequest(toAccountId: number) {
-    const res = await fetch('/api/attendee/connections/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ toAccountId }),
-    })
-    if (res.ok || res.status === 409) {
-      setRequestedIds(prev => new Set(prev).add(toAccountId))
+    setRequestErrors(prev => { const n = { ...prev }; delete n[toAccountId]; return n })
+    try {
+      const res = await fetch('/api/attendee/connections/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ toAccountId }),
+      })
+      if (res.ok || res.status === 409) {
+        setRequestedIds(prev => new Set(prev).add(toAccountId))
+      } else {
+        setRequestErrors(prev => ({ ...prev, [toAccountId]: 'Failed to send — try again.' }))
+      }
+    } catch {
+      setRequestErrors(prev => ({ ...prev, [toAccountId]: 'Network error.' }))
     }
   }
 
@@ -337,47 +360,54 @@ export default function AttendeeTabView({
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px' }}>
                 Results
               </div>
-              {searchResults.length === 0 && !searching ? (
+              {searchError && (
+                <p style={{ fontSize: '13px', color: '#b91c1c', margin: '0 0 8px' }}>{searchError}</p>
+              )}
+              {!searchError && searchResults.length === 0 && !searching ? (
                 <p style={{ fontSize: '13px', color: C.text2, textAlign: 'center', padding: '16px 0', margin: 0 }}>No public attendees found.</p>
               ) : (
                 searchResults.map((person, i) => (
-                  <div key={person.id} style={{
-                    background: C.white,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: '14px',
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginBottom: '8px',
-                  }}>
+                  <div key={person.id} style={{ marginBottom: '8px' }}>
                     <div style={{
-                      width: '40px', height: '40px', borderRadius: '50%',
-                      background: AVATAR_COLORS[i % AVATAR_COLORS.length],
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '14px', fontWeight: 700, color: C.white, flexShrink: 0,
+                      background: C.white,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: '14px',
+                      padding: '12px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
                     }}>
-                      {initials(person.name)}
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '14px', fontWeight: 700, color: C.white, flexShrink: 0,
+                      }}>
+                        {initials(person.name)}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: C.text }}>{person.name}</div>
+                        {person.jobTitle && <div style={{ fontSize: '12px', color: C.text2 }}>{person.jobTitle}{person.company ? ` · ${person.company}` : ''}</div>}
+                      </div>
+                      <button
+                        onClick={() => sendRequest(person.id)}
+                        disabled={requestedIds.has(person.id)}
+                        style={{
+                          fontSize: '12px', fontWeight: 700,
+                          padding: '6px 12px', borderRadius: '8px', border: 'none',
+                          background: requestedIds.has(person.id) ? '#d1fae5' : C.primary,
+                          color: requestedIds.has(person.id) ? '#059669' : C.white,
+                          cursor: requestedIds.has(person.id) ? 'default' : 'pointer',
+                          flexShrink: 0,
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {requestedIds.has(person.id) ? '✓ Sent' : 'Request'}
+                      </button>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: C.text }}>{person.name}</div>
-                      {person.jobTitle && <div style={{ fontSize: '12px', color: C.text2 }}>{person.jobTitle}{person.company ? ` · ${person.company}` : ''}</div>}
-                    </div>
-                    <button
-                      onClick={() => sendRequest(person.id)}
-                      disabled={requestedIds.has(person.id)}
-                      style={{
-                        fontSize: '12px', fontWeight: 700,
-                        padding: '6px 12px', borderRadius: '8px', border: 'none',
-                        background: requestedIds.has(person.id) ? '#d1fae5' : C.primary,
-                        color: requestedIds.has(person.id) ? '#059669' : C.white,
-                        cursor: requestedIds.has(person.id) ? 'default' : 'pointer',
-                        flexShrink: 0,
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      {requestedIds.has(person.id) ? '✓ Sent' : 'Request'}
-                    </button>
+                    {requestErrors[person.id] && (
+                      <p style={{ fontSize: '11px', color: '#b91c1c', margin: '4px 0 0 14px' }}>{requestErrors[person.id]}</p>
+                    )}
                   </div>
                 ))
               )}
@@ -390,6 +420,9 @@ export default function AttendeeTabView({
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px' }}>
                 Pending Requests · {pendingRequests.length}
               </div>
+              {respondError && (
+                <p style={{ fontSize: '12px', color: '#b91c1c', margin: '0 0 8px' }}>{respondError}</p>
+              )}
               {pendingRequests.map((req, i) => (
                 <div key={req.id} style={{
                   background: 'linear-gradient(135deg, #fafafe, #f5f3ff)',

@@ -24,16 +24,22 @@ export async function createConnection(ownerAccountId: number, fields: CreateCon
     ))
   if (existing) return { duplicate: true as const }
 
-  const [row] = await db
-    .insert(connections)
-    .values({
-      ownerId: ownerAccountId,
-      connectedName: fields.connectedName,
-      contactInfo: fields.contactInfo ?? null,
-      eventId: fields.eventId ?? null,
-    })
-    .returning({ id: connections.id })
-  return { id: row.id }
+  try {
+    const [row] = await db
+      .insert(connections)
+      .values({
+        ownerId: ownerAccountId,
+        connectedName: fields.connectedName,
+        contactInfo: fields.contactInfo ?? null,
+        eventId: fields.eventId ?? null,
+      })
+      .returning({ id: connections.id })
+    return { id: row.id }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : ''
+    if (msg.includes('unique') || msg.includes('duplicate')) return { duplicate: true as const }
+    throw e
+  }
 }
 
 export async function getConnections(ownerAccountId: number) {
@@ -83,11 +89,17 @@ export async function createConnectionRequest(
     ))
   if (existing) return { duplicate: true as const }
 
-  const [row] = await db
-    .insert(connectionRequests)
-    .values({ fromAccountId, toAccountId, eventId: eventId ?? null, status: 'pending' })
-    .returning({ id: connectionRequests.id })
-  return { id: row.id }
+  try {
+    const [row] = await db
+      .insert(connectionRequests)
+      .values({ fromAccountId, toAccountId, eventId: eventId ?? null, status: 'pending' })
+      .returning({ id: connectionRequests.id })
+    return { id: row.id }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : ''
+    if (msg.includes('unique') || msg.includes('duplicate')) return { duplicate: true as const }
+    throw e
+  }
 }
 
 export async function getPendingRequests(toAccountId: number) {

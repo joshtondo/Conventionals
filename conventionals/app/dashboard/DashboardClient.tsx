@@ -108,6 +108,7 @@ export default function DashboardClient({
         setConfirmDelete(null)
         return
       }
+      setConfirmDelete(null)
       router.refresh()
     } catch {
       setDeleteError('Network error — please try again.')
@@ -561,6 +562,7 @@ export default function DashboardClient({
                             flexShrink: 0,
                           }}
                           onClick={() => setConfirmDelete(event.id)}
+                          disabled={!!deleting[event.id]}
                         >
                           Delete
                         </button>
