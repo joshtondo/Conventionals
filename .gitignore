@@ -12,3 +12,7 @@ client/dist/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# other
+settings.json
+settings.local.json
