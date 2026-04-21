@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import DiscoverDeck, { DiscoverPerson } from './DiscoverDeck'
+import { initials } from '@/lib/utils'
 
 type EventHistoryItem = {
   eventId: number
@@ -34,10 +35,6 @@ const C = {
 
 const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
 
-function initials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
-}
-
 type Tab = 'events' | 'discover' | 'connections' | 'schedule'
 
 const TABS: { id: Tab; label: string }[] = [
@@ -51,12 +48,14 @@ export default function AttendeeTabView({
   eventHistory,
   discoverPeople,
   connections = [],
+  initialTab = 'events',
 }: {
   eventHistory: EventHistoryItem[]
   discoverPeople: DiscoverPerson[]
   connections?: Connection[]
+  initialTab?: Tab
 }) {
-  const [tab, setTab] = useState<Tab>('events')
+  const [tab, setTab] = useState<Tab>(initialTab)
 
   return (
     <div>

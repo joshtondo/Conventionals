@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import jsQR from 'jsqr'
+import { initials } from '@/lib/utils'
 
 const C = {
   primary: '#6366f1',
@@ -15,10 +16,6 @@ const C = {
 }
 
 const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
-
-function initials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
-}
 
 type ResultState =
   | { type: 'success'; name: string }
@@ -61,6 +58,8 @@ export default function QRScanner({
 
   const [cameraReady, setCameraReady] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
+  const [needsTap, setNeedsTap] = useState(false)
+  const streamRef = useRef<MediaStream | null>(null)
   const [result, setResult] = useState<ResultState | null>(null)
   const [manualToken, setManualToken] = useState('')
   const [manualError, setManualError] = useState<string | null>(null)
@@ -141,23 +140,39 @@ export default function QRScanner({
     rafRef.current = requestAnimationFrame(tick)
   }, [doCheckin])
 
-  useEffect(() => {
-    let stream: MediaStream | null = null
+  const activateCamera = useCallback(async () => {
+    const video = videoRef.current
+    if (!video) return
+    setNeedsTap(false)
+    try {
+      await video.play()
+      setCameraReady(true)
+      startScanLoop()
+    } catch {
+      setCameraError('Camera access denied or unavailable.')
+    }
+  }, [startScanLoop])
 
+  useEffect(() => {
     async function startCamera() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
         })
+        streamRef.current = stream
         const video = videoRef.current
-        if (video) {
-          video.srcObject = stream
-          await new Promise<void>((resolve) => {
-            video.onloadedmetadata = () => resolve()
-          })
+        if (!video) return
+        video.srcObject = stream
+        await new Promise<void>((resolve) => {
+          video.onloadedmetadata = () => resolve()
+        })
+        try {
           await video.play()
           setCameraReady(true)
           startScanLoop()
+        } catch {
+          // iOS Safari blocks autoplay — show a tap-to-start prompt
+          setNeedsTap(true)
         }
       } catch {
         setCameraError('Camera access denied or unavailable.')
@@ -168,7 +183,7 @@ export default function QRScanner({
 
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-      stream?.getTracks().forEach((t) => t.stop())
+      streamRef.current?.getTracks().forEach((t) => t.stop())
     }
   }, [startScanLoop])
 
@@ -215,6 +230,10 @@ export default function QRScanner({
           from { opacity: 0; transform: translateY(-8px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
       `}</style>
 
       <div style={{
@@ -228,13 +247,28 @@ export default function QRScanner({
         <div style={{
           padding: '16px 20px 12px',
           backgroundColor: '#0f172a',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}>
-          <p style={{ color: C.white, fontWeight: 700, fontSize: '17px', margin: '0 0 2px' }}>
-            Scan to Check In
-          </p>
-          <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>
-            {eventName}
-          </p>
+          <div>
+            <p style={{ color: C.white, fontWeight: 700, fontSize: '17px', margin: '0 0 2px' }}>
+              Scan to Check In
+            </p>
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>
+              {eventName}
+            </p>
+          </div>
+          {cameraReady && !result && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{
+                width: '7px', height: '7px', borderRadius: '50%',
+                background: '#10b981',
+                animation: 'pulse-dot 1.5s ease-in-out infinite',
+              }} />
+              <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>Scanning</span>
+            </div>
+          )}
         </div>
 
         {/* Success banner */}
@@ -282,7 +316,7 @@ export default function QRScanner({
             <canvas ref={canvasRef} style={{ display: 'none' }} />
 
             {/* Loading state */}
-            {!cameraReady && (
+            {!cameraReady && !needsTap && (
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -293,6 +327,37 @@ export default function QRScanner({
                 fontSize: '14px',
               }}>
                 Starting camera…
+              </div>
+            )}
+
+            {/* iOS tap-to-start */}
+            {needsTap && (
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '14px',
+                backgroundColor: '#0f172a',
+              }}>
+                <span style={{ fontSize: '40px' }}>📷</span>
+                <button
+                  onClick={activateCamera}
+                  style={{
+                    padding: '14px 28px',
+                    background: `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})`,
+                    color: C.white,
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Tap to Start Camera
+                </button>
               </div>
             )}
 

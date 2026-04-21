@@ -165,7 +165,16 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
           }}
         />
         {draftError && (
-          <p style={{ fontSize: '13px', color: C.danger, margin: '0 0 8px' }}>{draftError}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <p style={{ fontSize: '13px', color: C.danger, margin: 0 }}>{draftError}</p>
+            <button
+              type="button"
+              onClick={() => { setDraftError(null); handleDraft() }}
+              style={{ fontSize: '12px', color: C.primary, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: 0, textDecoration: 'underline' }}
+            >
+              Try again
+            </button>
+          </div>
         )}
         <button
           type="button"
@@ -186,7 +195,7 @@ export default function AnnouncementsClient({ events }: { events: EventOption[] 
             boxShadow: drafting || !brief.trim() ? 'none' : '0 2px 8px rgba(99,102,241,0.25)',
           }}
         >
-          {drafting ? '✨ Drafting…' : '✨ Generate Draft'}
+          {drafting ? 'Generating…' : '✨ Generate Draft'}
         </button>
         {(subject || message) && !drafting && (
           <p style={{ fontSize: '12px', color: '#7c3aed', marginTop: '10px', margin: '10px 0 0' }}>

@@ -2,7 +2,9 @@ import 'server-only'
 import { db } from '@/lib/db'
 import { attendees, attendeeAccounts, badges, events } from '@/drizzle/schema'
 import { eq, and, asc, desc, sql } from 'drizzle-orm'
-import { generateQR } from '@/lib/qr'
+function qrImageUrl(badgeUrl: string) {
+  return `${process.env.NEXT_PUBLIC_APP_URL}/api/qr?url=${encodeURIComponent(badgeUrl)}`
+}
 import { sendBadgeEmail } from '@/lib/email'
 
 export async function createAttendeeAndBadge(
@@ -26,7 +28,7 @@ export async function createAttendeeAndBadge(
     .returning({ id: badges.id, token: badges.token, emailSent: badges.emailSent })
 
   const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/badge/${badge.token}`
-  const qrDataUrl = await generateQR(badgeUrl)
+  const qrDataUrl = qrImageUrl(badgeUrl)
 
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/attendee/signup?token=${attendee.inviteToken}`
   const emailSent = await sendBadgeEmail({ to: attendee.email, name: attendee.name, badgeUrl, qrDataUrl, inviteUrl, eventName, badgeType: attendee.badgeType })
@@ -123,7 +125,7 @@ export async function resendBadge(token: string, organizerId: number) {
 
   const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/badge/${token}`
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/attendee/signup?token=${row.inviteToken}`
-  const qrDataUrl = await generateQR(badgeUrl)
+  const qrDataUrl = qrImageUrl(badgeUrl)
   const emailSent = await sendBadgeEmail({ to: row.email, name: row.name, badgeUrl, qrDataUrl, inviteUrl, eventName: row.eventName, badgeType: row.badgeType })
 
   if (emailSent) {

@@ -9,32 +9,50 @@ import AttendeeTabView from '@/components/AttendeeTabView'
 import { DiscoverPerson } from '@/components/DiscoverDeck'
 import AttendeeProfileBanner from '@/components/AttendeeProfileBanner'
 
-export default async function AttendeeDashboardPage() {
+const VALID_TABS = ['events', 'discover', 'connections', 'schedule'] as const
+type Tab = typeof VALID_TABS[number]
+
+export default async function AttendeeDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
   if (!session.attendeeAccountId) redirect('/attendee/login')
 
   const account = await getAttendeeAccount(session.attendeeAccountId)
   if (!account) redirect('/attendee/login')
 
+  const params = await searchParams
+  const initialTab: Tab = VALID_TABS.includes(params.tab as Tab)
+    ? (params.tab as Tab)
+    : 'events'
+
   const [eventHistory, connectionsList] = await Promise.all([
     getEventHistory(session.attendeeAccountId),
     getConnections(session.attendeeAccountId),
   ])
 
-  // Build deduped discover list from all events the attendee has attended
+  // Fetch all event attendees in parallel instead of sequentially
+  const peopleResults = await Promise.allSettled(
+    eventHistory.map(event =>
+      getPublicAttendeesForEvent(event.eventId, session.attendeeAccountId!)
+    )
+  )
+
   const seenIds = new Set<number>()
   const discoverPeople: DiscoverPerson[] = []
 
-  for (const event of eventHistory) {
-    const people = await getPublicAttendeesForEvent(event.eventId, session.attendeeAccountId)
-    if (!people) continue
-    for (const person of people) {
+  for (let i = 0; i < eventHistory.length; i++) {
+    const result = peopleResults[i]
+    if (result.status !== 'fulfilled' || !result.value) continue
+    for (const person of result.value) {
       if (!seenIds.has(person.id)) {
         seenIds.add(person.id)
         discoverPeople.push({
           ...person,
-          sharedEventId: event.eventId,
-          sharedEventName: event.eventName,
+          sharedEventId: eventHistory[i].eventId,
+          sharedEventName: eventHistory[i].eventName,
         })
       }
     }
@@ -54,6 +72,7 @@ export default async function AttendeeDashboardPage() {
           eventHistory={eventHistory}
           discoverPeople={discoverPeople}
           connections={connectionsList}
+          initialTab={initialTab}
         />
       </main>
     </div>

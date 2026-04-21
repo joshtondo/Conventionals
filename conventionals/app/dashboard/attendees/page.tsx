@@ -6,6 +6,7 @@ import { getAllAttendees } from '@/data/badges'
 import { getOrganizerById } from '@/data/auth'
 import { getEvents } from '@/data/events'
 import HamburgerDrawer from '@/components/HamburgerDrawer'
+import { initials } from '@/lib/utils'
 
 const C = {
   primary: '#6366f1',
@@ -19,10 +20,6 @@ const C = {
 }
 
 const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
-
-function initials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
-}
 
 export default async function AttendeesPage() {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)

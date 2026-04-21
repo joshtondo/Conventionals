@@ -1,15 +1,9 @@
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import { getBadgeWithProfile } from '@/data/badges'
 import { generateQR } from '@/lib/qr'
 import BadgeShareButton from '@/components/BadgeShareButton'
-
-function initials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-}
+import { initials } from '@/lib/utils'
 
 function interestChips(jobTitle: string | null, company: string | null): string[] {
   const chips: string[] = []
@@ -201,11 +195,13 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
               backgroundColor: '#f8fafc',
               marginBottom: '10px',
             }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={qrDataUrl}
                 alt="Badge QR Code"
-                style={{ width: '200px', height: '200px', display: 'block', borderRadius: '8px' }}
+                width={200}
+                height={200}
+                unoptimized
+                style={{ display: 'block', borderRadius: '8px' }}
               />
             </div>
             <p style={{

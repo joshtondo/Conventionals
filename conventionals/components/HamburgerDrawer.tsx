@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { initials } from '@/lib/utils'
 
 type Variant = 'organizer' | 'attendee'
 
@@ -26,21 +27,14 @@ const C = {
   overlay: 'rgba(0,0,0,0.4)',
 }
 
-function initials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
 const orgSections = [
   {
     label: 'Event',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: '📊' },
       { label: 'Attendees', href: '/dashboard/attendees', icon: '👥' },
-      { label: 'Scan Check-in', href: null, icon: '📷', hrefPrefix: '/event/' },
+      { label: 'Scan Check-in', href: '__scan__', icon: '📷' },
+      { label: 'Manage Attendees', href: '__manage__', icon: '📋' },
       { label: 'Schedule', href: '/dashboard/schedule', icon: '📅' },
       { label: 'Shared Events', href: '/dashboard/shared', icon: '🤝' },
     ],
@@ -66,7 +60,9 @@ const attSections = [
     label: 'Discover',
     items: [
       { label: 'My Events', href: '/attendee/dashboard', icon: '📋' },
+      { label: 'Discover People', href: '/attendee/dashboard?tab=discover', icon: '✨' },
       { label: 'Connections', href: '/attendee/connections', icon: '🤝' },
+      { label: 'Schedule', href: '/attendee/dashboard?tab=schedule', icon: '📅' },
     ],
   },
   {
@@ -92,24 +88,41 @@ export default function HamburgerDrawer({
   const [notifLoaded, setNotifLoaded] = useState(false)
   const unreadCount = notifLoaded ? notifications.length : 0
 
-  async function openBell() {
-    setBellOpen(v => {
-      if (!v && variant === 'organizer') {
-        fetch('/api/notifications', { credentials: 'include' })
-          .then(r => r.ok ? r.json() : [])
-          .then((data: typeof notifications) => {
-            setNotifications(data)
-            setNotifLoaded(true)
-            // Mark non-profile-setup notifications as read — profile_setup stay until dismissed/completed
-            const nonSetup = data.filter((n: typeof notifications[0]) => n.type !== 'profile_setup')
-            if (nonSetup.length > 0) {
-              fetch('/api/notifications/read', { method: 'POST', credentials: 'include' }).catch(() => {})
-            }
-          })
-          .catch(() => setNotifLoaded(true))
-      }
-      return !v
-    })
+  // Extract event ID from current path (e.g. /event/42/upload → 42)
+  const eventIdFromPath = pathname.match(/^\/event\/(\d+)/)?.[1] ?? null
+  const scanHref = eventIdFromPath ? `/event/${eventIdFromPath}/scan` : '/dashboard'
+  const manageHref = eventIdFromPath ? `/event/${eventIdFromPath}/upload` : '/dashboard'
+  const profileUrl = variant === 'organizer' ? '/dashboard/profile' : '/attendee/profile'
+
+  // Prefetch notifications in background so they're ready when bell opens
+  useEffect(() => {
+    if (variant !== 'organizer') return
+    const t = setTimeout(() => {
+      fetch('/api/notifications', { credentials: 'include' })
+        .then(r => r.ok ? r.json() : [])
+        .then((data: typeof notifications) => { setNotifications(data); setNotifLoaded(true) })
+        .catch(() => setNotifLoaded(true))
+    }, 800)
+    return () => clearTimeout(t)
+  }, [variant]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function openBell() {
+    const opening = !bellOpen
+    setBellOpen(opening)
+    if (!opening || variant !== 'organizer') return
+
+    // Refresh in background every time bell opens
+    fetch('/api/notifications', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: typeof notifications) => {
+        setNotifications(data)
+        setNotifLoaded(true)
+        const nonSetup = data.filter((n: typeof notifications[0]) => n.type !== 'profile_setup')
+        if (nonSetup.length > 0) {
+          fetch('/api/notifications/read', { method: 'POST', credentials: 'include' }).catch(() => {})
+        }
+      })
+      .catch(() => {})
   }
 
   function dismissProfileSetup(id: number) {
@@ -145,9 +158,12 @@ export default function HamburgerDrawer({
   const roleLabel = userRole ?? (variant === 'organizer' ? 'Event Organizer' : 'Attendee')
   const userInitials = userName ? initials(userName) : (variant === 'organizer' ? 'OR' : 'AT')
 
-  function isActive(href: string | null) {
-    if (!href) return false
-    return pathname === href || pathname.startsWith(href + '/')
+  function isActive(href: string) {
+    if (href === '__scan__') return pathname.endsWith('/scan')
+    if (href === '__manage__') return pathname.endsWith('/upload')
+    // Strip query params before comparing
+    const hrefPath = href.split('?')[0]
+    return pathname === hrefPath || pathname.startsWith(hrefPath + '/')
   }
 
   async function handleLogout() {
@@ -158,6 +174,12 @@ export default function HamburgerDrawer({
       // redirect anyway
     }
     router.push(loginUrl)
+  }
+
+  function resolveHref(item: { href: string; label: string }) {
+    if (item.href === '__scan__') return scanHref
+    if (item.href === '__manage__') return manageHref
+    return item.href
   }
 
   return (
@@ -238,13 +260,13 @@ export default function HamburgerDrawer({
               }}
             >
               🔔
-              {(unreadCount > 0 || !notifLoaded) && (
+              {unreadCount > 0 && (
                 <div style={{
                   position: 'absolute',
                   top: '6px',
                   right: '6px',
-                  minWidth: unreadCount > 0 ? '16px' : '8px',
-                  height: unreadCount > 0 ? '16px' : '8px',
+                  minWidth: '16px',
+                  height: '16px',
                   background: '#ef4444',
                   borderRadius: '50%',
                   border: '2px solid #fff',
@@ -256,7 +278,7 @@ export default function HamburgerDrawer({
                   justifyContent: 'center',
                   lineHeight: 1,
                 }}>
-                  {unreadCount > 0 ? (unreadCount > 9 ? '9+' : unreadCount) : ''}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </div>
               )}
             </button>
@@ -336,21 +358,29 @@ export default function HamburgerDrawer({
               </>
             )}
           </div>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: C.white,
-            fontSize: '12px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}>
+
+          {/* Profile avatar — clicks through to profile */}
+          <Link
+            href={profileUrl}
+            aria-label="Go to profile"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: C.white,
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textDecoration: 'none',
+              flexShrink: 0,
+            }}
+          >
             {userInitials}
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -450,14 +480,13 @@ export default function HamburgerDrawer({
                 {section.label}
               </div>
               {section.items.map((item) => {
-                const active = item.href ? isActive(item.href) : false
-                // For scan check-in, point to first event (disabled if no href)
-                const href = item.href ?? '#'
+                const active = isActive(item.href)
+                const href = resolveHref(item)
                 return (
                   <Link
                     key={item.label}
                     href={href}
-                    onClick={() => { if (item.href) setOpen(false) }}
+                    onClick={() => setOpen(false)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

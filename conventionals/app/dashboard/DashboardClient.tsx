@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import HamburgerDrawer from '@/components/HamburgerDrawer'
+import { initials } from '@/lib/utils'
 
 type EventItem = {
   id: number
@@ -37,10 +38,6 @@ const C = {
 
 const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
 
-function initials(name: string) {
-  return name.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
-}
-
 export default function DashboardClient({
   events,
   stats,
@@ -58,6 +55,8 @@ export default function DashboardClient({
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState<Record<number, boolean>>({})
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Aggregate stats across all events
   const totalRegistered = events.reduce((sum, e) => sum + (stats[e.id]?.total ?? 0), 0)
@@ -97,7 +96,7 @@ export default function DashboardClient({
   }
 
   async function handleDelete(eventId: number) {
-    if (!window.confirm('Delete this event? This cannot be undone.')) return
+    setDeleteError(null)
     setDeleting((prev) => ({ ...prev, [eventId]: true }))
     try {
       const res = await fetch(`/api/events/${eventId}`, {
@@ -105,12 +104,14 @@ export default function DashboardClient({
         credentials: 'include',
       })
       if (!res.ok) {
-        window.alert('Failed to delete event. Please try again.')
+        setDeleteError('Failed to delete event — please try again.')
+        setConfirmDelete(null)
         return
       }
       router.refresh()
     } catch {
-      window.alert('Network error — please try again.')
+      setDeleteError('Network error — please try again.')
+      setConfirmDelete(null)
     } finally {
       setDeleting((prev) => ({ ...prev, [eventId]: false }))
     }
@@ -488,6 +489,11 @@ export default function DashboardClient({
           }}>
             Your Events
           </p>
+          {deleteError && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px', fontSize: '13px', color: C.danger }}>
+              {deleteError}
+            </div>
+          )}
           {events.length === 0 ? (
             <p style={{ textAlign: 'center' as const, color: C.text2, fontSize: '0.875rem', padding: '32px 0' }}>
               No events yet — create one above.
@@ -496,39 +502,69 @@ export default function DashboardClient({
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {events.map((event) => {
                 const es = stats[event.id] ?? { total: 0, checkedIn: 0, emailsSent: 0 }
+                const isConfirming = confirmDelete === event.id
                 return (
                   <li key={event.id} style={{
                     backgroundColor: C.white,
                     borderRadius: '14px',
-                    border: `1px solid ${C.border}`,
-                    borderLeft: `4px solid ${C.primary}`,
+                    border: `1px solid ${isConfirming ? '#fca5a5' : C.border}`,
+                    borderLeft: `4px solid ${isConfirming ? C.danger : C.primary}`,
                     padding: '16px',
                     marginBottom: '10px',
                     display: 'flex',
                     flexDirection: 'column' as const,
                     gap: '6px',
+                    transition: 'border-color 0.15s',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                       <p style={{ fontWeight: 700, color: C.text, fontSize: '0.9375rem', margin: 0, lineHeight: 1.3 }}>
                         {event.name}
                       </p>
-                      <button
-                        style={{
-                          height: '32px',
-                          padding: '0 10px',
-                          backgroundColor: 'transparent',
-                          color: deleting[event.id] ? '#9ca3af' : C.danger,
-                          border: `1px solid ${deleting[event.id] ? '#d1d5db' : C.dangerBorder}`,
-                          borderRadius: '8px',
-                          fontSize: '0.75rem',
-                          cursor: deleting[event.id] ? 'not-allowed' : 'pointer',
-                          flexShrink: 0,
-                        }}
-                        onClick={() => handleDelete(event.id)}
-                        disabled={!!deleting[event.id]}
-                      >
-                        {deleting[event.id] ? 'Deleting…' : 'Delete'}
-                      </button>
+                      {isConfirming ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <span style={{ fontSize: '12px', color: C.danger, fontWeight: 600, whiteSpace: 'nowrap' as const }}>Sure?</span>
+                          <button
+                            style={{
+                              height: '32px', padding: '0 10px',
+                              backgroundColor: C.danger, color: C.white,
+                              border: 'none', borderRadius: '8px',
+                              fontSize: '0.75rem', fontWeight: 700,
+                              cursor: deleting[event.id] ? 'not-allowed' : 'pointer',
+                            }}
+                            onClick={() => handleDelete(event.id)}
+                            disabled={!!deleting[event.id]}
+                          >
+                            {deleting[event.id] ? 'Deleting…' : 'Yes, delete'}
+                          </button>
+                          <button
+                            style={{
+                              height: '32px', padding: '0 10px',
+                              backgroundColor: 'transparent', color: C.text2,
+                              border: `1px solid ${C.border}`, borderRadius: '8px',
+                              fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                            }}
+                            onClick={() => setConfirmDelete(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          style={{
+                            height: '32px', padding: '0 10px',
+                            backgroundColor: 'transparent',
+                            color: C.danger,
+                            border: `1px solid ${C.dangerBorder}`,
+                            borderRadius: '8px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                          }}
+                          onClick={() => setConfirmDelete(event.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                     <p style={{ fontSize: '0.8rem', color: C.text2, margin: 0 }}>
                       {event.eventDate ?? 'No date set'}

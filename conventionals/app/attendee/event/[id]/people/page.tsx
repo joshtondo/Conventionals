@@ -11,7 +11,7 @@ export default async function PeoplePage({ params }: { params: Promise<{ id: str
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions)
   if (!session.attendeeAccountId) redirect('/attendee/login')
 
-  const eventId = parseInt(id)
+  const eventId = parseInt(id, 10)
   if (isNaN(eventId)) notFound()
 
   const [people, account] = await Promise.all([

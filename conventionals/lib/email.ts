@@ -1,7 +1,13 @@
 import 'server-only'
-import sgMail from '@sendgrid/mail'
+import nodemailer from 'nodemailer'
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+})
 
 export function escapeHtml(str: string): string {
   return str
@@ -136,15 +142,15 @@ export async function sendBadgeEmail({
 </html>`
 
   try {
-    await sgMail.send({
+    await transporter.sendMail({
       to,
-      from: process.env.SENDGRID_FROM_EMAIL!,
+      from: process.env.GMAIL_USER,
       subject: `Your badge for ${eventName}`,
       html,
     })
     return true
   } catch (err) {
-    console.error('SendGrid error:', (err as Error).message)
+    console.error('Email error:', (err as Error).message)
     return false
   }
 }
@@ -200,15 +206,15 @@ export async function sendCoOrganizerInviteEmail({
 </html>`
 
   try {
-    await sgMail.send({
+    await transporter.sendMail({
       to,
-      from: process.env.SENDGRID_FROM_EMAIL!,
+      from: process.env.GMAIL_USER,
       subject: `${invitedByName} invited you to co-organize "${eventName}"`,
       html,
     })
     return true
   } catch (err) {
-    console.error('SendGrid co-organizer invite error:', (err as Error).message)
+    console.error('Email co-organizer invite error:', (err as Error).message)
     return false
   }
 }
@@ -259,15 +265,15 @@ export async function sendPasswordResetEmail({
 </html>`
 
   try {
-    await sgMail.send({
+    await transporter.sendMail({
       to,
-      from: process.env.SENDGRID_FROM_EMAIL!,
+      from: process.env.GMAIL_USER,
       subject: 'Reset your Conventionals password',
       html,
     })
     return true
   } catch (err) {
-    console.error('SendGrid password reset error:', (err as Error).message)
+    console.error('Email password reset error:', (err as Error).message)
     return false
   }
 }
@@ -315,15 +321,15 @@ export async function sendAnnouncementEmail({
 </html>`
 
   try {
-    await sgMail.send({
+    await transporter.sendMail({
       to,
-      from: process.env.SENDGRID_FROM_EMAIL!,
+      from: process.env.GMAIL_USER,
       subject,
       html,
     })
     return true
   } catch (err) {
-    console.error('SendGrid announcement error:', (err as Error).message)
+    console.error('Email announcement error:', (err as Error).message)
     return false
   }
 }

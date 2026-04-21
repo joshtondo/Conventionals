@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { initials } from '@/lib/utils'
 
 export type DiscoverPerson = {
   id: number
@@ -31,10 +32,6 @@ const GRADIENT_HEADERS = [
   'linear-gradient(135deg, #10b981, #059669)',
   'linear-gradient(135deg, #f59e0b, #d97706)',
 ]
-
-function initials(name: string) {
-  return name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
-}
 
 function skillChips(person: DiscoverPerson): string[] {
   const chips: string[] = []

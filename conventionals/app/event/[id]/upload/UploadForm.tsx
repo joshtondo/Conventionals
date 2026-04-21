@@ -153,6 +153,27 @@ const s = {
     color: '#065f46',
     fontWeight: '500',
   } as React.CSSProperties,
+  fileInputArea: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '9px 12px',
+    background: '#f5f3ff',
+    border: '1.5px dashed #ddd6fe',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    userSelect: 'none',
+  } as React.CSSProperties,
+  fileInputHidden: {
+    position: 'absolute',
+    inset: 0,
+    opacity: 0,
+    cursor: 'pointer',
+    width: '100%',
+    height: '100%',
+  } as React.CSSProperties,
 }
 
 export default function UploadForm({
@@ -208,6 +229,25 @@ export default function UploadForm({
     }
   }
 
+  async function handleCsvFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setCsvFile(file)
+    setCsvError(null)
+    setCsvResult(null)
+    if (!file) return
+    try {
+      const text = await file.text()
+      const firstLine = text.split('\n')[0].toLowerCase()
+      if (!firstLine.includes('name') || !firstLine.includes('email')) {
+        setCsvError('CSV must have "name" and "email" column headers in the first row.')
+        setCsvFile(null)
+        if (csvInputRef.current) csvInputRef.current.value = ''
+      }
+    } catch {
+      // If we can't read the file locally, let the server validate it
+    }
+  }
+
   async function handleCsvUpload(e: React.FormEvent) {
     e.preventDefault()
     if (!csvFile) return
@@ -253,7 +293,7 @@ export default function UploadForm({
         return
       }
       if (data.emailSent === false) {
-        setResendError('Email could not be sent — check your SendGrid account.')
+        setResendError('Email could not be sent — check your email configuration.')
         return
       }
       setResentTokens(prev => new Set(prev).add(token))
@@ -310,14 +350,21 @@ export default function UploadForm({
         <p style={s.formTitle}>Bulk Upload CSV</p>
         <div style={s.formRow}>
           <label style={s.label} htmlFor="csv-file">CSV File (columns: name, email) *</label>
-          <input
-            id="csv-file"
-            type="file"
-            accept=".csv"
-            ref={csvInputRef}
-            onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
-            required
-          />
+          <div style={s.fileInputArea}>
+            <span style={{ fontSize: '1rem', lineHeight: 1 }}>📎</span>
+            <span style={{ color: csvFile ? '#1e1b4b' : '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {csvFile ? csvFile.name : 'Choose a CSV file…'}
+            </span>
+            <input
+              id="csv-file"
+              type="file"
+              accept=".csv"
+              ref={csvInputRef}
+              onChange={handleCsvFileChange}
+              required
+              style={s.fileInputHidden}
+            />
+          </div>
         </div>
         <button
           type="submit"
