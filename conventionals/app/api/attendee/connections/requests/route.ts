@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { withAttendeeAuth } from '@/lib/session'
 import { getPendingRequests, createConnectionRequest } from '@/data/connections'
+import { db } from '@/lib/db'
+import { events } from '@/drizzle/schema'
+import { eq } from 'drizzle-orm'
 
 // GET /api/attendee/connections/requests — list pending incoming requests
 export const GET = withAttendeeAuth(async (_req, ctx) => {
@@ -22,11 +25,13 @@ export const POST = withAttendeeAuth(async (req, ctx) => {
     return NextResponse.json({ error: 'Cannot request yourself' }, { status: 400 })
   }
 
-  const result = await createConnectionRequest(
-    fromAccountId,
-    body.toAccountId,
-    typeof body.eventId === 'number' ? body.eventId : null
-  )
+  const eventId = typeof body.eventId === 'number' ? body.eventId : null
+  if (eventId !== null) {
+    const [event] = await db.select({ id: events.id }).from(events).where(eq(events.id, eventId))
+    if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 400 })
+  }
+
+  const result = await createConnectionRequest(fromAccountId, body.toAccountId, eventId)
 
   if ('duplicate' in result) return NextResponse.json({ error: 'Request already sent' }, { status: 409 })
   return NextResponse.json({ id: result.id }, { status: 201 })

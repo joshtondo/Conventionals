@@ -81,6 +81,10 @@ export default function AttendeeTabView({
   const urlTab = searchParams.get('tab')
   const tab: Tab = VALID_TABS.includes(urlTab as Tab) ? (urlTab as Tab) : 'events'
 
+  // Live connections — starts from server-rendered prop, updated optimistically
+  const [liveConnections, setLiveConnections] = useState<Connection[]>(connections)
+  useEffect(() => { setLiveConnections(connections) }, [connections])
+
   // Connections tab state
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
   const [requestsLoaded, setRequestsLoaded] = useState(false)
@@ -113,15 +117,24 @@ export default function AttendeeTabView({
     }
   }, [])
 
+  // Initial load when switching to connections tab
   useEffect(() => {
     if (tab === 'connections' && !requestsLoaded) {
       loadPendingRequests()
     }
   }, [tab, requestsLoaded, loadPendingRequests])
 
+  // Poll for new pending requests every 30s while on connections tab
+  useEffect(() => {
+    if (tab !== 'connections') return
+    const interval = setInterval(loadPendingRequests, 30_000)
+    return () => clearInterval(interval)
+  }, [tab, loadPendingRequests])
+
   async function respond(requestId: number, accept: boolean) {
     setRespondingId(requestId)
     setRespondError(null)
+    const req = pendingRequests.find(r => r.id === requestId)
     try {
       const res = await fetch(`/api/attendee/connections/requests/${requestId}`, {
         method: 'POST',
@@ -130,8 +143,22 @@ export default function AttendeeTabView({
         body: JSON.stringify({ accept }),
       })
       if (res.ok) {
-        // Only remove from list once server confirms — prevents ghost state on failure
         setPendingRequests(prev => prev.filter(r => r.id !== requestId))
+        if (accept && req) {
+          // Optimistically add to connections list immediately
+          const newConn: Connection = {
+            id: -requestId,
+            connectedName: req.fromName,
+            contactInfo: req.fromSocialLinks ?? null,
+            notes: null,
+            eventId: req.eventId,
+            eventName: req.eventName,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          setLiveConnections(prev => [newConn, ...prev])
+          router.refresh() // re-hydrate server data in background
+        }
       } else {
         setRespondError('Something went wrong — please try again.')
       }
@@ -182,6 +209,24 @@ export default function AttendeeTabView({
       setRequestErrors(prev => ({ ...prev, [toAccountId]: 'Network error.' }))
     }
   }
+
+  // Called by DiscoverDeck when a connection is made — adds to list immediately
+  const handleConnect = useCallback((name: string, contactInfo: Connection['contactInfo'], eventId: number) => {
+    setLiveConnections(prev => {
+      if (prev.some(c => c.connectedName === name)) return prev
+      return [{
+        id: -(Date.now()),
+        connectedName: name,
+        contactInfo,
+        notes: null,
+        eventId,
+        eventName: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }, ...prev]
+    })
+    router.refresh()
+  }, [router])
 
   const pendingCount = pendingRequests.length
 
@@ -307,7 +352,7 @@ export default function AttendeeTabView({
               </p>
             </div>
           ) : (
-            <DiscoverDeck people={discoverPeople} />
+            <DiscoverDeck people={discoverPeople} onConnect={handleConnect} />
           )}
         </div>
       )}
@@ -485,7 +530,7 @@ export default function AttendeeTabView({
           )}
 
           {/* Connections list */}
-          {connections.length === 0 && pendingRequests.length === 0 ? (
+          {liveConnections.length === 0 && pendingRequests.length === 0 ? (
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               padding: '48px 24px', gap: '12px', textAlign: 'center',
@@ -494,14 +539,14 @@ export default function AttendeeTabView({
               <p style={{ fontSize: '16px', fontWeight: 700, color: C.text, margin: 0 }}>No connections yet</p>
               <p style={{ fontSize: '14px', color: C.text2, margin: 0 }}>Swipe to connect in Discover, or search above.</p>
             </div>
-          ) : connections.length > 0 ? (
+          ) : liveConnections.length > 0 ? (
             <>
               {pendingRequests.length > 0 || searchQuery ? (
                 <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px' }}>
-                  Your Connections · {connections.length}
+                  Your Connections · {liveConnections.length}
                 </div>
               ) : null}
-              {connections.map((conn, i) => {
+              {liveConnections.map((conn, i) => {
                 const contactInfo = conn.contactInfo ?? {}
                 return (
                   <div key={conn.id} style={{

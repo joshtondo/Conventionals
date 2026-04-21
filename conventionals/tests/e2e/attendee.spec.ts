@@ -86,7 +86,7 @@ test.describe('Story 5.3 — Attendee Login & Logout UI', () => {
     await page.fill('#attendee-login-email', attEmail)
     await page.fill('#attendee-login-password', 'WrongPass99')
     await page.click('button[type="submit"]')
-    await expect(page.locator('p')).toContainText(/invalid/i, { timeout: 5000 })
+    await expect(page.getByText(/invalid/i)).toBeVisible({ timeout: 5000 })
   })
 })
 

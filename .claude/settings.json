@@ -1,7 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \"const j = require\\('jsqr'\\); console.log\\(typeof j\\)\")"
+      "Bash(node -e \"const j = require\\('jsqr'\\); console.log\\(typeof j\\)\")",
+      "Bash(PGPASSWORD=npg_7jGenDizwRu0 psql \"postgresql://neondb_owner@ep-cool-dust-ampitfh2.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require\" -c \"\\\\dt\")",
+      "Bash(cat /c/Users/xdJos/Projects/Conventionals/conventionals/app/api/event-invites/[id]/accept/route.ts)",
+      "Bash(cat /c/Users/xdJos/Projects/Conventionals/conventionals/app/api/event-invites/[id]/decline/route.ts)",
+      "Bash(psql 'postgresql://neondb_owner@ep-cool-dust-ampitfh2.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require' -f /c/Users/xdJos/Projects/Conventionals/conventionals/drizzle/migrations/0006_event_organizers.sql)",
+      "Bash(git rm:*)",
+      "Bash(node -e \"require\\('@anthropic-ai/sdk'\\); console.log\\('ok'\\)\")",
+      "Bash(npm list *)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(ls app/attendee/event/[id]/)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.get\\('scripts',{}\\).items\\(\\) if 'drizzle' in k or 'db' in k.lower\\(\\)}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); scripts=d.get\\('scripts',{}\\); [print\\(k,':',v\\) for k,v in scripts.items\\(\\)]\")",
+      "Bash(node -e ' *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\xdJos\\Projects\\Conventionals\\conventionals\\app\\api\\notifications\\[id]",
+      "C:\\Users\\xdJos\\Projects\\Conventionals\\conventionals\\app\\api\\attendee\\connections\\requests"
     ]
   }
 }

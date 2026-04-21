@@ -96,7 +96,9 @@ function InstructionsBanner() {
   )
 }
 
-function AIPicksSection({ people }: { people: DiscoverPerson[] }) {
+type OnConnectFn = (name: string, contactInfo: { email?: string; linkedin?: string; twitter?: string; website?: string } | null, eventId: number) => void
+
+function AIPicksSection({ people, onConnect }: { people: DiscoverPerson[]; onConnect?: OnConnectFn }) {
   const [picks, setPicks] = useState<AIPick[]>([])
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -146,6 +148,7 @@ function AIPicksSection({ people }: { people: DiscoverPerson[] }) {
         }),
       })
       if (res.ok || res.status === 409) {
+        if (res.ok) onConnect?.(person.name, person.socialLinks ?? null, person.sharedEventId)
         setConnectedIds(prev => new Set(prev).add(pick.id))
       }
     } finally {
@@ -238,7 +241,7 @@ function AIPicksSection({ people }: { people: DiscoverPerson[] }) {
   )
 }
 
-export default function DiscoverDeck({ people }: { people: DiscoverPerson[] }) {
+export default function DiscoverDeck({ people, onConnect }: { people: DiscoverPerson[]; onConnect?: OnConnectFn }) {
   const [index, setIndex] = useState(0)
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -270,6 +273,7 @@ export default function DiscoverDeck({ people }: { people: DiscoverPerson[] }) {
         }),
       })
       if (res.ok || res.status === 409) {
+        if (res.ok) onConnect?.(current.name, current.socialLinks ?? null, current.sharedEventId)
         setIndex((i) => i + 1)
       } else {
         setError('Could not connect — please try again.')
@@ -296,7 +300,7 @@ export default function DiscoverDeck({ people }: { people: DiscoverPerson[] }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <InstructionsBanner />
-      <AIPicksSection people={people} />
+      <AIPicksSection people={people} onConnect={onConnect} />
 
       {!current ? (
         <div style={{

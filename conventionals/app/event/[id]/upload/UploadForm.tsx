@@ -240,8 +240,6 @@ export default function UploadForm({
       const firstLine = text.split('\n')[0].toLowerCase()
       if (!firstLine.includes('name') || !firstLine.includes('email')) {
         setCsvError('CSV must have "name" and "email" column headers in the first row.')
-        setCsvFile(null)
-        if (csvInputRef.current) csvInputRef.current.value = ''
       }
     } catch {
       // If we can't read the file locally, let the server validate it

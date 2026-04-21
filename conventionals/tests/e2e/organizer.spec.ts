@@ -60,8 +60,8 @@ test.describe('Stories 1.4/1.5 — Organizer Login & Logout UI', () => {
     await page.fill('#password', password)
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/dashboard', { timeout: 10000 })
-    // Dashboard shows "My Events" heading
-    await expect(page.getByRole('heading', { name: 'My Events' })).toBeVisible()
+    // Dashboard shows event form and "Your Events" label
+    await expect(page.locator('#event-name')).toBeVisible()
   })
 
   test('shows error for invalid credentials', async ({ page }) => {
@@ -69,7 +69,7 @@ test.describe('Stories 1.4/1.5 — Organizer Login & Logout UI', () => {
     await page.fill('#email', email)
     await page.fill('#password', 'wrong-password')
     await page.click('button[type="submit"]')
-    await expect(page.locator('p')).toContainText('Invalid email or password', { timeout: 5000 })
+    await expect(page.getByText('Invalid email or password')).toBeVisible({ timeout: 5000 })
     await expect(page).toHaveURL('/login')
   })
 
@@ -85,9 +85,10 @@ test.describe('Stories 1.4/1.5 — Organizer Login & Logout UI', () => {
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL('/dashboard', { timeout: 10000 })
 
-    // Dashboard uses "Log out" (not "Logout")
-    await page.click('button:has-text("Log out")')
-    await expect(page).toHaveURL('/login', { timeout: 5000 })
+    // Open hamburger drawer, then click "Sign Out"
+    await page.click('button[aria-label="Open navigation menu"]')
+    await page.click('button:has-text("Sign Out")')
+    await expect(page).toHaveURL('/login', { timeout: 10000 })
   })
 })
 

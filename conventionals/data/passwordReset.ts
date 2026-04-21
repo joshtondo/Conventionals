@@ -5,6 +5,10 @@ import { eq, and, gt, isNull } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 
+function hashToken(rawToken: string): string {
+  return crypto.createHash('sha256').update(rawToken).digest('hex')
+}
+
 export async function createPasswordResetToken(userType: 'organizer' | 'attendee', email: string): Promise<string | null> {
   const normalizedEmail = email.trim().toLowerCase()
 
@@ -17,42 +21,43 @@ export async function createPasswordResetToken(userType: 'organizer' | 'attendee
     if (!acc) return null
   }
 
-  const token = crypto.randomBytes(32).toString('hex')
+  // Generate a cryptographically random token — store only its SHA-256 hash in the DB.
+  // Even if the database is compromised, the raw token (sent to the user's email) cannot
+  // be derived from the stored hash.
+  const rawToken = crypto.randomBytes(32).toString('hex')
+  const tokenHash = hashToken(rawToken)
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
 
-  await db.insert(passwordResetTokens).values({ userType, email: normalizedEmail, token, expiresAt })
+  await db.insert(passwordResetTokens).values({ userType, email: normalizedEmail, token: tokenHash, expiresAt })
 
-  return token
-}
-
-export async function validatePasswordResetToken(token: string): Promise<{ email: string; userType: 'organizer' | 'attendee' } | null> {
-  const now = new Date().toISOString()
-  const [row] = await db
-    .select({ email: passwordResetTokens.email, userType: passwordResetTokens.userType })
-    .from(passwordResetTokens)
-    .where(and(
-      eq(passwordResetTokens.token, token),
-      isNull(passwordResetTokens.usedAt),
-      gt(passwordResetTokens.expiresAt, now),
-    ))
-  return row ?? null
+  return rawToken // return the raw token — only the user's email receives this
 }
 
 export async function consumePasswordResetToken(token: string, newPassword: string): Promise<boolean> {
-  const record = await validatePasswordResetToken(token)
-  if (!record) return false
+  const tokenHash = hashToken(token)
+  const now = new Date().toISOString()
+
+  // Atomically claim the token in a single UPDATE. If two concurrent requests race,
+  // only the first will receive a row back — the second gets null and returns false.
+  const [claimed] = await db
+    .update(passwordResetTokens)
+    .set({ usedAt: now })
+    .where(and(
+      eq(passwordResetTokens.token, tokenHash),
+      isNull(passwordResetTokens.usedAt),
+      gt(passwordResetTokens.expiresAt, now),
+    ))
+    .returning({ email: passwordResetTokens.email, userType: passwordResetTokens.userType })
+
+  if (!claimed) return false
 
   const hash = await bcrypt.hash(newPassword, 10)
 
-  if (record.userType === 'organizer') {
-    await db.update(organizers).set({ passwordHash: hash }).where(eq(organizers.email, record.email))
+  if (claimed.userType === 'organizer') {
+    await db.update(organizers).set({ passwordHash: hash }).where(eq(organizers.email, claimed.email))
   } else {
-    await db.update(attendeeAccounts).set({ passwordHash: hash }).where(eq(attendeeAccounts.email, record.email))
+    await db.update(attendeeAccounts).set({ passwordHash: hash }).where(eq(attendeeAccounts.email, claimed.email))
   }
-
-  await db.update(passwordResetTokens)
-    .set({ usedAt: new Date().toISOString() })
-    .where(eq(passwordResetTokens.token, token))
 
   return true
 }
