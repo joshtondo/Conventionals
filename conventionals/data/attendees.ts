@@ -124,6 +124,32 @@ export async function getPublicAttendeesForEvent(eventId: number, myAttendeeAcco
     ))
 }
 
+export async function getEventDetailsForAttendee(eventId: number, attendeeAccountId: number) {
+  const [account] = await db
+    .select({ email: attendeeAccounts.email })
+    .from(attendeeAccounts)
+    .where(eq(attendeeAccounts.id, attendeeAccountId))
+  if (!account) return null
+
+  const [myRow] = await db
+    .select({ id: attendees.id })
+    .from(attendees)
+    .where(and(eq(attendees.eventId, eventId), eq(attendees.email, account.email)))
+  if (!myRow) return null
+
+  const [event] = await db
+    .select({
+      id: events.id,
+      name: events.name,
+      eventDate: events.eventDate,
+      organizerName: organizers.name,
+    })
+    .from(events)
+    .innerJoin(organizers, eq(events.organizerId, organizers.id))
+    .where(eq(events.id, eventId))
+  return event ?? null
+}
+
 export async function markInviteUsed(attendeeId: number) {
   await db
     .update(attendees)

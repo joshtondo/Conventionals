@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { initials } from '@/lib/utils'
 
@@ -81,6 +81,7 @@ export default function HamburgerDrawer({
 }: HamburgerDrawerProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [bellOpen, setBellOpen] = useState(false)
@@ -161,9 +162,26 @@ export default function HamburgerDrawer({
   function isActive(href: string) {
     if (href === '__scan__') return pathname.endsWith('/scan')
     if (href === '__manage__') return pathname.endsWith('/upload')
-    // Strip query params before comparing
-    const hrefPath = href.split('?')[0]
-    return pathname === hrefPath || pathname.startsWith(hrefPath + '/')
+
+    const [hrefPath, hrefQuery] = href.split('?')
+
+    // Path must match exactly — no startsWith to avoid multiple highlights
+    if (pathname !== hrefPath) return false
+
+    if (hrefQuery) {
+      // Href has query params — verify each one matches the current URL
+      const hrefParams = new URLSearchParams(hrefQuery)
+      for (const [key, value] of hrefParams.entries()) {
+        if (searchParams.get(key) !== value) return false
+      }
+      return true
+    }
+
+    // Href has no query — only active when there's no ?tab= in the current URL
+    // (prevents "My Events" lighting up while on discover/schedule tab)
+    if (searchParams.get('tab')) return false
+
+    return true
   }
 
   async function handleLogout() {

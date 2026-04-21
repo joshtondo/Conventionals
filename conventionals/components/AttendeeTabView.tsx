@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import DiscoverDeck, { DiscoverPerson } from './DiscoverDeck'
 import { initials } from '@/lib/utils'
 
@@ -103,24 +104,36 @@ export default function AttendeeTabView({
             </p>
           ) : (
             eventHistory.map((event) => (
-              <div key={event.eventId} style={{
-                backgroundColor: C.white,
-                border: `1px solid ${C.border}`,
-                borderLeft: `4px solid ${C.primary}`,
-                borderRadius: '14px',
-                padding: '16px',
-                marginBottom: '10px',
-              }}>
-                <p style={{ fontWeight: 700, color: C.text, margin: '0 0 4px', fontSize: '0.9375rem' }}>
-                  {event.eventName}
-                </p>
-                <p style={{ fontSize: '0.8rem', color: C.text2, margin: 0 }}>
-                  {event.eventDate
-                    ? new Date(event.eventDate).toLocaleDateString()
-                    : 'TBD'}
-                  {event.organizerName ? ` · ${event.organizerName}` : ''}
-                </p>
-              </div>
+              <Link
+                key={event.eventId}
+                href={`/attendee/event/${event.eventId}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: C.white,
+                  border: `1px solid ${C.border}`,
+                  borderLeft: `4px solid ${C.primary}`,
+                  borderRadius: '14px',
+                  padding: '16px',
+                  marginBottom: '10px',
+                  textDecoration: 'none',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontWeight: 700, color: C.text, margin: '0 0 4px', fontSize: '0.9375rem' }}>
+                    {event.eventName}
+                  </p>
+                  <p style={{ fontSize: '0.8rem', color: C.text2, margin: 0 }}>
+                    {event.eventDate
+                      ? new Date(event.eventDate).toLocaleDateString()
+                      : 'TBD'}
+                    {event.organizerName ? ` · ${event.organizerName}` : ''}
+                  </p>
+                </div>
+                <span style={{ fontSize: '16px', color: C.text3, flexShrink: 0 }}>›</span>
+              </Link>
             ))
           )}
         </div>
@@ -275,16 +288,20 @@ export default function AttendeeTabView({
                     {dateStr}
                   </div>
                   {/* Session row */}
-                  <div style={{
-                    backgroundColor: C.white,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: '14px',
-                    padding: '14px 16px',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                  }}>
+                  <Link
+                    href={`/attendee/event/${event.eventId}`}
+                    style={{
+                      display: 'flex',
+                      backgroundColor: C.white,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: '14px',
+                      padding: '14px 16px',
+                      marginBottom: '12px',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      textDecoration: 'none',
+                    }}
+                  >
                     {/* Time/dot indicator */}
                     <div style={{
                       width: '10px',
@@ -315,7 +332,7 @@ export default function AttendeeTabView({
                     }}>
                       {isUpcoming ? 'Upcoming' : 'Attended'}
                     </span>
-                  </div>
+                  </Link>
                 </div>
               )
             })
