@@ -1,7 +1,7 @@
 import 'server-only'
 import { db } from '@/lib/db'
-import { connections, events } from '@/drizzle/schema'
-import { eq, and, isNull, desc } from 'drizzle-orm'
+import { connections, connectionRequests, events, attendeeAccounts, attendees } from '@/drizzle/schema'
+import { eq, and, isNull, desc, ne, inArray, ilike } from 'drizzle-orm'
 
 type CreateConnectionFields = {
   connectedName: string
@@ -65,4 +65,129 @@ export async function updateConnectionNotes(
     .where(and(eq(connections.id, connectionId), eq(connections.ownerId, ownerAccountId)))
     .returning({ id: connections.id })
   return result[0] ?? null
+}
+
+// ─── Connection Requests ────────────────────────────────────────────────────
+
+export async function createConnectionRequest(
+  fromAccountId: number,
+  toAccountId: number,
+  eventId: number | null
+) {
+  const [existing] = await db
+    .select({ id: connectionRequests.id })
+    .from(connectionRequests)
+    .where(and(
+      eq(connectionRequests.fromAccountId, fromAccountId),
+      eq(connectionRequests.toAccountId, toAccountId)
+    ))
+  if (existing) return { duplicate: true as const }
+
+  const [row] = await db
+    .insert(connectionRequests)
+    .values({ fromAccountId, toAccountId, eventId: eventId ?? null, status: 'pending' })
+    .returning({ id: connectionRequests.id })
+  return { id: row.id }
+}
+
+export async function getPendingRequests(toAccountId: number) {
+  return db
+    .select({
+      id: connectionRequests.id,
+      fromAccountId: connectionRequests.fromAccountId,
+      fromName: attendeeAccounts.name,
+      fromJobTitle: attendeeAccounts.jobTitle,
+      fromCompany: attendeeAccounts.company,
+      fromSocialLinks: attendeeAccounts.socialLinks,
+      eventId: connectionRequests.eventId,
+      eventName: events.name,
+      createdAt: connectionRequests.createdAt,
+    })
+    .from(connectionRequests)
+    .innerJoin(attendeeAccounts, eq(connectionRequests.fromAccountId, attendeeAccounts.id))
+    .leftJoin(events, eq(connectionRequests.eventId, events.id))
+    .where(and(
+      eq(connectionRequests.toAccountId, toAccountId),
+      eq(connectionRequests.status, 'pending')
+    ))
+    .orderBy(desc(connectionRequests.createdAt))
+}
+
+export async function respondToRequest(
+  requestId: number,
+  toAccountId: number,
+  accept: boolean
+) {
+  const [req] = await db
+    .select()
+    .from(connectionRequests)
+    .where(and(
+      eq(connectionRequests.id, requestId),
+      eq(connectionRequests.toAccountId, toAccountId),
+      eq(connectionRequests.status, 'pending')
+    ))
+  if (!req) return null
+
+  await db
+    .update(connectionRequests)
+    .set({ status: accept ? 'accepted' : 'declined' })
+    .where(eq(connectionRequests.id, requestId))
+
+  if (accept) {
+    const [sender] = await db
+      .select({ name: attendeeAccounts.name, socialLinks: attendeeAccounts.socialLinks })
+      .from(attendeeAccounts)
+      .where(eq(attendeeAccounts.id, req.fromAccountId))
+    if (sender) {
+      await createConnection(toAccountId, {
+        connectedName: sender.name,
+        contactInfo: sender.socialLinks ?? null,
+        eventId: req.eventId,
+      })
+    }
+  }
+
+  return { status: accept ? 'accepted' : 'declined' }
+}
+
+// ─── People Search ───────────────────────────────────────────────────────────
+
+export async function searchPublicAttendees(query: string, myAccountId: number) {
+  if (!query.trim()) return []
+
+  const [myAccount] = await db
+    .select({ email: attendeeAccounts.email })
+    .from(attendeeAccounts)
+    .where(eq(attendeeAccounts.id, myAccountId))
+  if (!myAccount) return []
+
+  const myEvents = await db
+    .select({ eventId: attendees.eventId })
+    .from(attendees)
+    .where(eq(attendees.email, myAccount.email))
+  if (myEvents.length === 0) return []
+
+  const eventIds = myEvents.map(e => e.eventId)
+
+  const rows = await db
+    .select({
+      id: attendeeAccounts.id,
+      name: attendeeAccounts.name,
+      jobTitle: attendeeAccounts.jobTitle,
+      company: attendeeAccounts.company,
+      socialLinks: attendeeAccounts.socialLinks,
+    })
+    .from(attendeeAccounts)
+    .innerJoin(attendees, eq(attendees.email, attendeeAccounts.email))
+    .where(and(
+      eq(attendeeAccounts.isPublic, true),
+      ne(attendeeAccounts.id, myAccountId),
+      inArray(attendees.eventId, eventIds),
+      ilike(attendeeAccounts.name, `%${query.trim()}%`)
+    ))
+    .limit(30)
+
+  // Deduplicate by account id (person may attend multiple shared events)
+  const seen = new Set<number>()
+  return rows.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true })
 }
