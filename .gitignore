@@ -13,6 +13,6 @@ client/dist/
 Thumbs.db
 .vscode/
 
-# other
-settings.json
-settings.local.json
+# Ignore Claude Code settings
+.claude/settings.json
+.claude/settings.local.json
