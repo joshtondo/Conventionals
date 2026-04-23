@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateQRBuffer } from '@/lib/qr'
+import { getAppUrl } from '@/lib/app-url'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? ''
+const APP_URL = getAppUrl()
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url')

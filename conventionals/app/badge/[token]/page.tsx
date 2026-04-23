@@ -4,6 +4,7 @@ import { getBadgeWithProfile } from '@/data/badges'
 import { generateQR } from '@/lib/qr'
 import BadgeShareButton from '@/components/BadgeShareButton'
 import { initials } from '@/lib/utils'
+import { getAppUrl } from '@/lib/app-url'
 
 function interestChips(jobTitle: string | null, company: string | null): string[] {
   const chips: string[] = []
@@ -23,7 +24,7 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
   const badge = await getBadgeWithProfile(token)
   if (!badge) notFound()
 
-  const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/badge/${token}`
+  const badgeUrl = `${getAppUrl()}/badge/${token}`
   const qrDataUrl = await generateQR(badgeUrl)
 
   const sl = badge.socialLinks ?? {}

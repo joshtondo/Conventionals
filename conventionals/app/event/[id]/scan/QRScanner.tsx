@@ -29,15 +29,19 @@ type CheckinRecord = {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_ANYWHERE_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
 
 function extractToken(raw: string): string | null {
+  const input = raw.trim()
   try {
-    const url = new URL(raw)
+    const url = new URL(input)
     const parts = url.pathname.split('/').filter(Boolean)
     const token = parts[parts.length - 1]
     return UUID_RE.test(token) ? token : null
   } catch {
-    return UUID_RE.test(raw.trim()) ? raw.trim() : null
+    if (UUID_RE.test(input)) return input
+    const match = input.match(UUID_ANYWHERE_RE)
+    return match ? match[0] : null
   }
 }
 

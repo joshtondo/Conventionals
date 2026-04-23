@@ -2,8 +2,10 @@ import 'server-only'
 import { db } from '@/lib/db'
 import { attendees, attendeeAccounts, badges, events } from '@/drizzle/schema'
 import { eq, and, asc, desc, sql } from 'drizzle-orm'
+import { getAppUrl } from '@/lib/app-url'
 function qrImageUrl(badgeUrl: string) {
-  return `${process.env.NEXT_PUBLIC_APP_URL}/api/qr?url=${encodeURIComponent(badgeUrl)}`
+  const appUrl = getAppUrl()
+  return `${appUrl}/api/qr?url=${encodeURIComponent(badgeUrl)}`
 }
 import { sendBadgeEmail } from '@/lib/email'
 
@@ -14,6 +16,7 @@ export async function createAttendeeAndBadge(
   email: string,
   eventName: string
 ) {
+  const appUrl = getAppUrl()
   const trimmedName = name.trim()
   const normalizedEmail = email.trim().toLowerCase()
 
@@ -27,10 +30,10 @@ export async function createAttendeeAndBadge(
     .values({ attendeeId: attendee.id, token: crypto.randomUUID() })
     .returning({ id: badges.id, token: badges.token, emailSent: badges.emailSent })
 
-  const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/badge/${badge.token}`
+  const badgeUrl = `${appUrl}/badge/${badge.token}`
   const qrDataUrl = qrImageUrl(badgeUrl)
 
-  const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/attendee/signup?token=${attendee.inviteToken}`
+  const inviteUrl = `${appUrl}/attendee/signup?token=${attendee.inviteToken}`
   const emailSent = await sendBadgeEmail({ to: attendee.email, name: attendee.name, badgeUrl, qrDataUrl, inviteUrl, eventName, badgeType: attendee.badgeType })
 
   if (emailSent) {
@@ -106,6 +109,7 @@ export async function getBadgeByToken(token: string) {
 }
 
 export async function resendBadge(token: string, organizerId: number) {
+  const appUrl = getAppUrl()
   const [row] = await db
     .select({
       id: badges.id,
@@ -123,8 +127,8 @@ export async function resendBadge(token: string, organizerId: number) {
     .where(eq(badges.token, token))
   if (!row || row.organizerId !== organizerId) return null
 
-  const badgeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/badge/${token}`
-  const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/attendee/signup?token=${row.inviteToken}`
+  const badgeUrl = `${appUrl}/badge/${token}`
+  const inviteUrl = `${appUrl}/attendee/signup?token=${row.inviteToken}`
   const qrDataUrl = qrImageUrl(badgeUrl)
   const emailSent = await sendBadgeEmail({ to: row.email, name: row.name, badgeUrl, qrDataUrl, inviteUrl, eventName: row.eventName, badgeType: row.badgeType })
 
