@@ -18,13 +18,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Brief is required' }, { status: 400 })
   }
 
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
-    messages: [
-      {
-        role: 'user',
-        content: `You are an event communications assistant. Write a concise, professional event announcement for an organizer.
+  try {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
+      messages: [
+        {
+          role: 'user',
+          content: `You are an event communications assistant. Write a concise, professional event announcement for an organizer.
 
 Event: ${eventName || 'the event'}
 Brief: ${brief.trim()}
@@ -36,13 +37,16 @@ Rules:
 - subject: under 60 characters, direct and clear
 - message: 2-4 short paragraphs, warm but professional tone, no filler phrases like "We are pleased to announce"
 - Do not include greetings or sign-offs — the email system adds those`,
-      },
-    ],
-  })
+        },
+      ],
+    })
 
-  const raw = (message.content[0] as { type: string; text: string }).text.trim()
-  try {
-    const parsed = JSON.parse(raw)
+    const raw = (message.content[0] as { type: string; text: string }).text.trim()
+    let cleaned = raw
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+    }
+    const parsed = JSON.parse(cleaned)
     if (!parsed.subject || !parsed.message) throw new Error('Missing fields')
     return NextResponse.json({ subject: parsed.subject, message: parsed.message })
   } catch {

@@ -14,12 +14,6 @@ export type DiscoverPerson = {
   sharedEventName: string
 }
 
-type AIPick = {
-  id: number
-  name: string
-  reason: string
-}
-
 const C = {
   primary: '#6366f1',
   primaryDark: '#4f46e5',
@@ -83,7 +77,6 @@ function InstructionsBanner() {
           ['💚', 'Connect — adds them to your connections and sends them a request'],
           ['✕', 'Pass — skip this person'],
           ['↩', 'Undo — go back one card'],
-          ['⭐', 'Super connect — same as connect (highlight coming soon)'],
           ['👆', 'Swipe right to connect, swipe left to pass'],
         ].map(([icon, text]) => (
           <div key={text} style={{ display: 'flex', gap: '8px', fontSize: '12px', color: C.text2, alignItems: 'flex-start' }}>
@@ -96,153 +89,19 @@ function InstructionsBanner() {
   )
 }
 
-type OnConnectFn = (name: string, contactInfo: { email?: string; linkedin?: string; twitter?: string; website?: string } | null, eventId: number) => void
+type OnConnectFn = (id: number, name: string, contactInfo: { email?: string; linkedin?: string; twitter?: string; website?: string } | null, eventId: number) => void
 
-function AIPicksSection({ people, onConnect }: { people: DiscoverPerson[]; onConnect?: OnConnectFn }) {
-  const [picks, setPicks] = useState<AIPick[]>([])
-  const [loading, setLoading] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [connectedIds, setConnectedIds] = useState<Set<number>>(new Set())
-  const [connecting, setConnecting] = useState<number | null>(null)
-
-  const eventId = people[0]?.sharedEventId ?? null
-
-  async function getAIPicks() {
-    if (!eventId) return
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/attendee/ai/recommendations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ eventId }),
-      })
-      if (!res.ok) throw new Error('Failed')
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setPicks(data.recommendations ?? [])
-      setLoaded(true)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load recommendations')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function connectPick(pick: AIPick) {
-    const person = people.find(p => p.id === pick.id)
-    if (!person || connectedIds.has(pick.id)) return
-    setConnecting(pick.id)
-    try {
-      const res = await fetch('/api/attendee/connections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          connectedName: person.name,
-          contactInfo: person.socialLinks ?? null,
-          eventId: person.sharedEventId,
-          toAccountId: person.id,
-        }),
-      })
-      if (res.ok || res.status === 409) {
-        if (res.ok) onConnect?.(person.name, person.socialLinks ?? null, person.sharedEventId)
-        setConnectedIds(prev => new Set(prev).add(pick.id))
-      }
-    } finally {
-      setConnecting(null)
-    }
-  }
-
-  if (!eventId) return null
-
-  return (
-    <div style={{ marginBottom: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: C.primary }}>🤖 AI Picks for You</div>
-        {!loaded && (
-          <button
-            onClick={getAIPicks}
-            disabled={loading}
-            style={{
-              fontSize: '12px', fontWeight: 700, padding: '5px 12px',
-              borderRadius: '8px', border: 'none',
-              background: loading ? '#e0e7ff' : C.primary,
-              color: loading ? C.primary : C.white,
-              cursor: loading ? 'default' : 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            {loading ? 'Thinking…' : 'Get Picks'}
-          </button>
-        )}
-        {loaded && (
-          <button
-            onClick={() => { setLoaded(false); setPicks([]); getAIPicks() }}
-            style={{ fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.white, color: C.text2, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            Refresh
-          </button>
-        )}
-      </div>
-
-      {error && (
-        <p style={{ fontSize: '12px', color: '#b91c1c', margin: '0 0 8px' }}>{error}</p>
-      )}
-
-      {loaded && picks.length === 0 && (
-        <p style={{ fontSize: '13px', color: C.text2, margin: 0 }}>No recommendations yet — try again later.</p>
-      )}
-
-      {picks.map((pick) => {
-        const person = people.find(p => p.id === pick.id)
-        const done = connectedIds.has(pick.id)
-        return (
-          <div key={pick.id} style={{
-            background: 'linear-gradient(135deg, #fafafe, #f5f3ff)',
-            border: '1px solid #c4b5fd',
-            borderRadius: '14px',
-            padding: '12px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '8px',
-          }}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '13px', fontWeight: 700, color: C.white, flexShrink: 0,
-            }}>
-              {person ? initials(person.name) : '?'}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{pick.name}</div>
-              <div style={{ fontSize: '11px', color: C.text2, marginTop: '2px', lineHeight: 1.4 }}>{pick.reason}</div>
-            </div>
-            <button
-              onClick={() => connectPick(pick)}
-              disabled={done || connecting === pick.id}
-              style={{
-                fontSize: '18px', padding: '6px 8px', borderRadius: '50%',
-                border: done ? '2px solid #6ee7b7' : '2px solid #6ee7b7',
-                background: C.white, cursor: done ? 'default' : 'pointer',
-                flexShrink: 0, opacity: connecting === pick.id ? 0.6 : 1,
-              }}
-            >
-              {done ? '✅' : '💚'}
-            </button>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-export default function DiscoverDeck({ people, onConnect }: { people: DiscoverPerson[]; onConnect?: OnConnectFn }) {
-  const [index, setIndex] = useState(0)
+export default function DiscoverDeck({
+  people,
+  onConnect,
+  index,
+  setIndex,
+}: {
+  people: DiscoverPerson[]
+  onConnect?: OnConnectFn
+  index: number
+  setIndex: React.Dispatch<React.SetStateAction<number>>
+}) {
   const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const touchStartX = useRef<number | null>(null)
@@ -273,7 +132,7 @@ export default function DiscoverDeck({ people, onConnect }: { people: DiscoverPe
         }),
       })
       if (res.ok || res.status === 409) {
-        if (res.ok) onConnect?.(current.name, current.socialLinks ?? null, current.sharedEventId)
+        if (res.ok) onConnect?.(current.id, current.name, current.socialLinks ?? null, current.sharedEventId)
         setIndex((i) => i + 1)
       } else {
         setError('Could not connect — please try again.')
@@ -300,7 +159,6 @@ export default function DiscoverDeck({ people, onConnect }: { people: DiscoverPe
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <InstructionsBanner />
-      <AIPicksSection people={people} onConnect={onConnect} />
 
       {!current ? (
         <div style={{
@@ -402,7 +260,6 @@ export default function DiscoverDeck({ people, onConnect }: { people: DiscoverPe
             <button onClick={skip} aria-label="Skip" style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px solid #fca5a5', background: C.white, color: '#ef4444', fontSize: '22px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0 }}>✕</button>
             <button onClick={() => { if (index > 0) { setIndex(i => i - 1); setError(null) } }} aria-label="Undo" disabled={index === 0} style={{ width: '52px', height: '52px', borderRadius: '50%', border: index === 0 ? `1.5px solid ${C.border}` : '2px solid #fde68a', background: C.white, color: index === 0 ? '#d1d5db' : '#f59e0b', fontSize: '18px', cursor: index === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flexShrink: 0 }}>↩</button>
             <button onClick={connect} disabled={connecting} aria-label="Connect" style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid #6ee7b7', background: C.white, color: '#10b981', fontSize: '26px', cursor: connecting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(16,185,129,0.2)', flexShrink: 0, opacity: connecting ? 0.7 : 1 }}>💚</button>
-            <button onClick={connect} disabled={connecting} aria-label="Super connect" style={{ width: '52px', height: '52px', borderRadius: '50%', border: '2px solid #a5b4fc', background: C.white, color: C.primary, fontSize: '18px', cursor: connecting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flexShrink: 0, opacity: connecting ? 0.7 : 1 }}>⭐</button>
           </div>
         </>
       )}

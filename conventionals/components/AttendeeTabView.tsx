@@ -85,6 +85,9 @@ export default function AttendeeTabView({
   const [liveConnections, setLiveConnections] = useState<Connection[]>(connections)
   useEffect(() => { setLiveConnections(connections) }, [connections])
 
+  // Discover deck index — kept here so it survives tab switches
+  const [discoverIndex, setDiscoverIndex] = useState(0)
+
   // Connections tab state
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
   const [requestsLoaded, setRequestsLoaded] = useState(false)
@@ -211,7 +214,7 @@ export default function AttendeeTabView({
   }
 
   // Called by DiscoverDeck when a connection is made — adds to list immediately
-  const handleConnect = useCallback((name: string, contactInfo: Connection['contactInfo'], eventId: number) => {
+  const handleConnect = useCallback((_id: number, name: string, contactInfo: Connection['contactInfo'], eventId: number) => {
     setLiveConnections(prev => {
       if (prev.some(c => c.connectedName === name)) return prev
       return [{
@@ -352,7 +355,7 @@ export default function AttendeeTabView({
               </p>
             </div>
           ) : (
-            <DiscoverDeck people={discoverPeople} onConnect={handleConnect} />
+            <DiscoverDeck people={discoverPeople} onConnect={handleConnect} index={discoverIndex} setIndex={setDiscoverIndex} />
           )}
         </div>
       )}
