@@ -2,7 +2,8 @@
 title: 'QR Scanner – Reliable Decode with @zxing/browser'
 type: 'bugfix'
 created: '2026-04-22'
-status: 'draft'
+status: 'done'
+baseline_commit: '648abdff4545b5a176fcf64cdd0e858c9285a159'
 ---
 
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">
@@ -53,9 +54,9 @@ status: 'draft'
 
 **Execution:**
 
-- [ ] `conventionals/` — run `npm install @zxing/browser` to add the package
+- [x] `conventionals/` — run `npm install @zxing/browser` to add the package
 
-- [ ] `conventionals/app/event/[id]/scan/QRScanner.tsx` — replace scan loop:
+- [x] `conventionals/app/event/[id]/scan/QRScanner.tsx` — replace scan loop:
   - Remove: `import jsQR from 'jsqr'`, `canvasRef`, canvas drawing, `requestAnimationFrame` tick, `rafRef`, `startScanLoop` callback
   - Add: `import { BrowserMultiFormatReader } from '@zxing/browser'` at top of file
   - In `useEffect` after `video.srcObject = stream` and `video.play()`: instantiate `const reader = new BrowserMultiFormatReader()` then call `reader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => { if (result && !pausedRef.current) { const token = extractToken(result.getText()); if (token) doCheckin(token); } })`
@@ -84,3 +85,29 @@ status: 'draft'
 - `cd conventionals && npm run lint` — expected: 0 errors
 
 ## Spec Change Log
+
+## Suggested Review Order
+
+**Decode mechanism replacement (entry point)**
+
+- Core swap: zxing `BrowserMultiFormatReader` replaces jsQR + RAF loop
+  [`QRScanner.tsx:111`](../../conventionals/app/event/%5Bid%5D/scan/QRScanner.tsx#L111)
+
+- Unmount-race guard: `unmounted` flag stops controls leaking after cleanup
+  [`QRScanner.tsx:114`](../../conventionals/app/event/%5Bid%5D/scan/QRScanner.tsx#L114)
+
+- Error surfacing: `console.error` replaces silent `.catch()` for dev visibility
+  [`QRScanner.tsx:128`](../../conventionals/app/event/%5Bid%5D/scan/QRScanner.tsx#L128)
+
+**Camera lifecycle & cleanup**
+
+- Controls stored post-promise; cleanup calls `controls.stop()` before track halt
+  [`QRScanner.tsx:166`](../../conventionals/app/event/%5Bid%5D/scan/QRScanner.tsx#L166)
+
+- iOS tap-to-start: `activateCamera` calls `startDecoding` only after play succeeds
+  [`QRScanner.tsx:143`](../../conventionals/app/event/%5Bid%5D/scan/QRScanner.tsx#L143)
+
+**Dependency**
+
+- New package `@zxing/browser` v0.1.5 added — 4 transitive packages
+  [`package.json:1`](../../conventionals/package.json#L1)

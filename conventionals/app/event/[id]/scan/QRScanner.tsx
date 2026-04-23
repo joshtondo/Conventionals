@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import jsQR from 'jsqr'
+import { BrowserMultiFormatReader } from '@zxing/browser'
+import type { IScannerControls } from '@zxing/browser'
 import { initials } from '@/lib/utils'
 
 const C = {
@@ -52,14 +53,13 @@ export default function QRScanner({
   eventName: string
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const rafRef = useRef<number | null>(null)
   const pausedRef = useRef(false)
+  const controlsRef = useRef<IScannerControls | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
   const [cameraReady, setCameraReady] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [needsTap, setNeedsTap] = useState(false)
-  const streamRef = useRef<MediaStream | null>(null)
   const [result, setResult] = useState<ResultState | null>(null)
   const [manualToken, setManualToken] = useState('')
   const [manualError, setManualError] = useState<string | null>(null)
@@ -70,7 +70,6 @@ export default function QRScanner({
   const doCheckin = useCallback(async (token: string) => {
     if (pausedRef.current) return
     pausedRef.current = true
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
 
     setChecking(true)
     try {
@@ -104,40 +103,34 @@ export default function QRScanner({
     setTimeout(() => {
       setResult(null)
       pausedRef.current = false
-      startScanLoop()
+      // zxing decode loop is still running — no restart needed
     }, 2500)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
-  const startScanLoop = useCallback(() => {
+  const startDecoding = useCallback(() => {
     const video = videoRef.current
-    const canvas = canvasRef.current
-    if (!video || !canvas) return
+    const stream = streamRef.current
+    if (!video || !stream) return
 
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    if (!ctx) return
+    let unmounted = false
+    const reader = new BrowserMultiFormatReader()
 
-    const tick = () => {
-      if (pausedRef.current) return
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'attemptBoth',
-        })
-        if (code) {
-          const token = extractToken(code.data)
-          if (token) {
-            doCheckin(token)
-            return
-          }
+    reader
+      .decodeFromStream(stream, video, (res) => {
+        if (res && !pausedRef.current) {
+          const token = extractToken(res.getText())
+          if (token) doCheckin(token)
         }
-      }
-      rafRef.current = requestAnimationFrame(tick)
-    }
+      })
+      .then((controls) => {
+        if (!unmounted) controlsRef.current = controls
+        else controls.stop()
+      })
+      .catch((err) => {
+        console.error('[QRScanner] decodeFromStream error:', err)
+      })
 
-    rafRef.current = requestAnimationFrame(tick)
+    return () => { unmounted = true }
   }, [doCheckin])
 
   const activateCamera = useCallback(async () => {
@@ -147,11 +140,11 @@ export default function QRScanner({
     try {
       await video.play()
       setCameraReady(true)
-      startScanLoop()
+      startDecoding()
     } catch {
       setCameraError('Camera access denied or unavailable.')
     }
-  }, [startScanLoop])
+  }, [startDecoding])
 
   useEffect(() => {
     async function startCamera() {
@@ -169,9 +162,9 @@ export default function QRScanner({
         try {
           await video.play()
           setCameraReady(true)
-          startScanLoop()
+          startDecoding()
         } catch {
-          // iOS Safari blocks autoplay — show a tap-to-start prompt
+          // iOS Safari blocks autoplay — show tap-to-start prompt
           setNeedsTap(true)
         }
       } catch {
@@ -182,10 +175,10 @@ export default function QRScanner({
     startCamera()
 
     return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      controlsRef.current?.stop()
       streamRef.current?.getTracks().forEach((t) => t.stop())
     }
-  }, [startScanLoop])
+  }, [startDecoding])
 
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -313,7 +306,6 @@ export default function QRScanner({
                 display: cameraReady ? 'block' : 'none',
               }}
             />
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
 
             {/* Loading state */}
             {!cameraReady && !needsTap && (
