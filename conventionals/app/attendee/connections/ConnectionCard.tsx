@@ -9,6 +9,7 @@ type Props = {
   id: number
   connectedName: string
   contactInfo: ContactInfo
+  connectedEmail: string | null
   eventName: string | null
   notes: string | null
   myName: string
@@ -43,6 +44,7 @@ export default function ConnectionCard({
   id,
   connectedName,
   contactInfo,
+  connectedEmail,
   eventName,
   notes: initialNotes,
   myName,
@@ -57,8 +59,10 @@ export default function ConnectionCard({
   const [copied, setCopied] = useState(false)
 
   const ci = contactInfo ?? {}
+  // Prefer the account email (always current) over whatever was in contactInfo at connection time
+  const email = connectedEmail ?? ci.email ?? null
   const hasNotes = notes.trim().length > 0
-  const hasContactLinks = ci.email || ci.linkedin || ci.twitter || ci.website
+  const hasContactLinks = email || ci.linkedin || ci.twitter || ci.website
 
   useEffect(() => {
     if (saveStatus === 'saved') {
@@ -171,8 +175,8 @@ export default function ConnectionCard({
       {/* Contact links */}
       {hasContactLinks && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
-          {ci.email && (
-            <a href={`mailto:${ci.email}`} style={chip}>✉️ {ci.email}</a>
+          {email && (
+            <a href={`mailto:${email}`} style={chip}>✉️ {email}</a>
           )}
           {ci.linkedin && (
             <a href={ci.linkedin} style={chip} target="_blank" rel="noopener noreferrer">LinkedIn</a>
@@ -345,9 +349,9 @@ export default function ConnectionCard({
 
           {/* Action buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {ci.email && (
+            {email && (
               <a
-                href={buildMailto(ci.email, draft.subject, draft.body)}
+                href={buildMailto(email, draft.subject, draft.body)}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   height: '48px', width: '100%',

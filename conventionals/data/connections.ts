@@ -7,6 +7,7 @@ type CreateConnectionFields = {
   connectedName: string
   contactInfo?: { email?: string; linkedin?: string; twitter?: string; website?: string } | null
   eventId?: number | null
+  connectedAccountId?: number | null
 }
 
 export async function createConnection(ownerAccountId: number, fields: CreateConnectionFields) {
@@ -32,6 +33,7 @@ export async function createConnection(ownerAccountId: number, fields: CreateCon
         connectedName: fields.connectedName,
         contactInfo: fields.contactInfo ?? null,
         eventId: fields.eventId ?? null,
+        connectedAccountId: fields.connectedAccountId ?? null,
       })
       .returning({ id: connections.id })
     return { id: row.id }
@@ -42,12 +44,18 @@ export async function createConnection(ownerAccountId: number, fields: CreateCon
   }
 }
 
+// Use an alias so Drizzle doesn't collide with the ownerId join
+const connectedAccount = attendeeAccounts
+
 export async function getConnections(ownerAccountId: number) {
   return db
     .select({
       id: connections.id,
       connectedName: connections.connectedName,
       contactInfo: connections.contactInfo,
+      // Always show the account email when the connection is linked to an account,
+      // falling back to whatever email was stored in contactInfo manually.
+      connectedEmail: connectedAccount.email,
       notes: connections.notes,
       eventId: connections.eventId,
       eventName: events.name,
@@ -56,6 +64,7 @@ export async function getConnections(ownerAccountId: number) {
     })
     .from(connections)
     .leftJoin(events, eq(connections.eventId, events.id))
+    .leftJoin(connectedAccount, eq(connections.connectedAccountId, connectedAccount.id))
     .where(eq(connections.ownerId, ownerAccountId))
     .orderBy(desc(connections.updatedAt))
 }
@@ -155,6 +164,7 @@ export async function respondToRequest(
         connectedName: sender.name,
         contactInfo: sender.socialLinks ?? null,
         eventId: req.eventId,
+        connectedAccountId: req.fromAccountId,
       })
     }
   }

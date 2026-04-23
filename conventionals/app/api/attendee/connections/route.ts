@@ -12,20 +12,26 @@ export const POST = withAttendeeAuth(async (req, ctx) => {
 
   const myId = ctx.session.attendeeAccountId!
   const eventId = typeof body.eventId === 'number' ? body.eventId : null
+  const toAccountId = typeof body.toAccountId === 'number' && body.toAccountId !== myId
+    ? body.toAccountId
+    : null
+
   const fields = {
     connectedName: body.connectedName.trim(),
     contactInfo: typeof body.contactInfo === 'object' && body.contactInfo !== null
       ? body.contactInfo as { linkedin?: string; twitter?: string; website?: string }
       : null,
     eventId,
+    // Store the linked account so we can always resolve their current email
+    connectedAccountId: toAccountId,
   }
 
   const result = await createConnection(myId, fields)
   if ('duplicate' in result) return NextResponse.json({ error: 'Already connected' }, { status: 409 })
 
-  // If the other person's account ID is provided (Discover flow), send them a connection request
-  if (typeof body.toAccountId === 'number' && body.toAccountId !== myId) {
-    await createConnectionRequest(myId, body.toAccountId, eventId)
+  // Send a connection request to the other person
+  if (toAccountId !== null) {
+    await createConnectionRequest(myId, toAccountId, eventId)
   }
 
   return NextResponse.json({ id: result.id }, { status: 201 })

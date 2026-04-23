@@ -48,6 +48,7 @@ export default async function ConnectionsPage() {
             id={conn.id}
             connectedName={conn.connectedName}
             contactInfo={conn.contactInfo ?? null}
+            connectedEmail={conn.connectedEmail ?? null}
             eventName={conn.eventName ?? null}
             notes={conn.notes ?? null}
             myName={account?.name ?? ''}

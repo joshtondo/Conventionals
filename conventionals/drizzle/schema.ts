@@ -88,6 +88,8 @@ export const connections = pgTable('connections', {
 	contactInfo: jsonb('contact_info').$type<{ email?: string; linkedin?: string; twitter?: string; website?: string }>(),
 	notes: text('notes'),
 	eventId: integer('event_id').references(() => events.id, { onDelete: 'set null' }),
+	// Links to the connected person's attendee account (nullable — not all connections have one)
+	connectedAccountId: integer('connected_account_id').references(() => attendeeAccounts.id, { onDelete: 'set null' }),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 })
