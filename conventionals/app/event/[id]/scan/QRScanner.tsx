@@ -1,10 +1,10 @@
 'use client'
- 
+
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import type { IScannerControls } from '@zxing/browser'
 import { initials } from '@/lib/utils'
- 
+
 const C = {
   primary: '#6366f1',
   primaryDark: '#4f46e5',
@@ -15,22 +15,22 @@ const C = {
   text2: '#475569',
   white: '#ffffff',
 }
- 
+
 const AVATAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9']
- 
+
 type ResultState =
   | { type: 'success'; name: string }
   | { type: 'duplicate'; name: string }
   | { type: 'error'; message: string }
- 
+
 type CheckinRecord = {
   id: number
   name: string
   time: Date
 }
- 
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
- 
+
 function extractToken(raw: string): string | null {
   try {
     const url = new URL(raw)
@@ -41,11 +41,11 @@ function extractToken(raw: string): string | null {
     return UUID_RE.test(raw.trim()) ? raw.trim() : null
   }
 }
- 
+
 function formatTime(d: Date) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
- 
+
 export default function QRScanner({
   eventName,
 }: {
@@ -53,12 +53,10 @@ export default function QRScanner({
   eventName: string
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const filterCanvasRef = useRef<HTMLCanvasElement>(null)
-  const filterRafRef = useRef<number | null>(null)
   const pausedRef = useRef(false)
   const controlsRef = useRef<IScannerControls | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
- 
+
   const [cameraReady, setCameraReady] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [needsTap, setNeedsTap] = useState(false)
@@ -68,11 +66,11 @@ export default function QRScanner({
   const [checking, setChecking] = useState(false)
   const [recentCheckins, setRecentCheckins] = useState<CheckinRecord[]>([])
   const checkinCounter = useRef(0)
- 
+
   const doCheckin = useCallback(async (token: string) => {
     if (pausedRef.current) return
     pausedRef.current = true
- 
+
     setChecking(true)
     try {
       const res = await fetch(`/api/badges/${token}/checkin`, {
@@ -101,21 +99,25 @@ export default function QRScanner({
     } finally {
       setChecking(false)
     }
- 
+
     setTimeout(() => {
       setResult(null)
       pausedRef.current = false
-      // zxing decode loop is still running — no restart needed
     }, 2500)
   }, [])
- 
-  const startDecoding = useCallback((stream: MediaStream) => {
+
+  // Starts the zxing decode loop against the raw camera stream.
+  // zxing owns the video setup (srcObject + play) — we never call video.play()
+  // before this, because doing so causes a double-play that breaks iOS Safari
+  // (the second play() lands outside the user-gesture window).
+  const startDecoding = useCallback(() => {
     const video = videoRef.current
-    if (!video) return
- 
-    let unmounted = false
+    const stream = streamRef.current
+    if (!video || !stream) return
+
+    controlsRef.current?.stop()
+
     const reader = new BrowserMultiFormatReader()
- 
     reader
       .decodeFromStream(stream, video, (res) => {
         if (res && !pausedRef.current) {
@@ -124,52 +126,37 @@ export default function QRScanner({
         }
       })
       .then((controls) => {
-        if (!unmounted) controlsRef.current = controls
-        else controls.stop()
+        controlsRef.current = controls
+        setCameraReady(true)
+        setNeedsTap(false)
       })
-      .catch((err) => {
-        console.error('[QRScanner] decodeFromStream error:', err)
+      .catch(() => {
+        // decodeFromStream throws when the browser blocks autoplay (iOS Safari).
+        // Show the tap-to-start prompt so the user can unlock playback via gesture.
+        setNeedsTap(true)
       })
- 
-    return () => { unmounted = true }
   }, [doCheckin])
- 
-  // Returns a filtered MediaStream from a hidden canvas with contrast preprocessing
-  function buildFilteredStream(rawStream: MediaStream): MediaStream {
-    const canvas = filterCanvasRef.current!
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })!
-    const src = document.createElement('video')
-    src.srcObject = rawStream
-    src.muted = true
-    src.playsInline = true
-    src.play()
-    const tick = () => {
-      if (src.readyState >= src.HAVE_ENOUGH_DATA) {
-        canvas.width = src.videoWidth || 640
-        canvas.height = src.videoHeight || 480
-        ctx.filter = 'grayscale(1) contrast(2) brightness(1.1)'
-        ctx.drawImage(src, 0, 0, canvas.width, canvas.height)
-        ctx.filter = 'none'
-      }
-      filterRafRef.current = requestAnimationFrame(tick)
-    }
-    filterRafRef.current = requestAnimationFrame(tick)
-    return canvas.captureStream(30)
-  }
- 
+
+  // iOS "Tap to Start Camera" handler.
+  // video.play() called here is within a user-gesture, which iOS requires.
+  // After it succeeds the video is playing; startDecoding() then calls
+  // decodeFromStream which sees the video already playing and skips its
+  // own play() call — so there's no double-play race.
   const activateCamera = useCallback(async () => {
     const video = videoRef.current
-    if (!video) return
+    const stream = streamRef.current
+    if (!video || !stream) return
     setNeedsTap(false)
+    video.srcObject = stream
     try {
       await video.play()
-      setCameraReady(true)
-      startDecoding(buildFilteredStream(streamRef.current!))
     } catch {
       setCameraError('Camera access denied or unavailable.')
+      return
     }
-  }, [startDecoding]) // eslint-disable-line react-hooks/exhaustive-deps
- 
+    startDecoding()
+  }, [startDecoding])
+
   useEffect(() => {
     async function startCamera() {
       try {
@@ -177,34 +164,24 @@ export default function QRScanner({
           video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
         })
         streamRef.current = stream
-        const video = videoRef.current
-        if (!video) return
-        video.srcObject = stream
-        await new Promise<void>((resolve) => {
-          video.onloadedmetadata = () => resolve()
-        })
-        try {
-          await video.play()
-          setCameraReady(true)
-          startDecoding(buildFilteredStream(stream))
-        } catch {
-          // iOS Safari blocks autoplay — show tap-to-start prompt
-          setNeedsTap(true)
-        }
+        // Hand the raw stream straight to zxing — it assigns srcObject and
+        // calls play() itself.  Do NOT set srcObject or call play() here;
+        // the extra play() call creates a race condition that silently breaks
+        // decoding (especially on iOS where only one play() per gesture is allowed).
+        startDecoding()
       } catch {
         setCameraError('Camera access denied or unavailable.')
       }
     }
- 
+
     startCamera()
- 
+
     return () => {
-      if (filterRafRef.current !== null) cancelAnimationFrame(filterRafRef.current)
       controlsRef.current?.stop()
       streamRef.current?.getTracks().forEach((t) => t.stop())
     }
-  }, [startDecoding]) // eslint-disable-line react-hooks/exhaustive-deps
- 
+  }, [startDecoding])
+
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
     setManualError(null)
@@ -216,27 +193,26 @@ export default function QRScanner({
     doCheckin(token)
     setManualToken('')
   }
- 
+
   const resultBg =
     result?.type === 'success'
       ? 'rgba(16,185,129,0.92)'
       : result?.type === 'duplicate'
       ? 'rgba(245,158,11,0.92)'
       : 'rgba(185,28,28,0.92)'
- 
+
   const resultIcon =
     result?.type === 'success' ? '✅' : result?.type === 'duplicate' ? '⚠️' : '❌'
- 
+
   const resultText =
     result?.type === 'success'
       ? `Checked in! ${result.name}`
       : result?.type === 'duplicate'
       ? `Already checked in${result.name ? ' · ' + result.name : ''}`
       : (result as { type: 'error'; message: string } | null)?.message ?? 'Error'
- 
+
   return (
     <>
-      <canvas ref={filterCanvasRef} style={{ display: 'none' }} />
       <style>{`
         @keyframes scanline {
           0%, 100% { top: 12%; }
@@ -254,7 +230,7 @@ export default function QRScanner({
           50% { opacity: 0.4; }
         }
       `}</style>
- 
+
       <div style={{
         minHeight: '100vh',
         backgroundColor: '#0f172a',
@@ -289,7 +265,7 @@ export default function QRScanner({
             </div>
           )}
         </div>
- 
+
         {/* Success banner */}
         {result?.type === 'success' && (
           <div style={{
@@ -309,7 +285,7 @@ export default function QRScanner({
             </div>
           </div>
         )}
- 
+
         {/* Camera viewport */}
         {!cameraError && (
           <div style={{
@@ -332,7 +308,7 @@ export default function QRScanner({
                 display: cameraReady ? 'block' : 'none',
               }}
             />
- 
+
             {/* Loading state */}
             {!cameraReady && !needsTap && (
               <div style={{
@@ -347,7 +323,7 @@ export default function QRScanner({
                 Starting camera…
               </div>
             )}
- 
+
             {/* iOS tap-to-start */}
             {needsTap && (
               <div style={{
@@ -378,7 +354,7 @@ export default function QRScanner({
                 </button>
               </div>
             )}
- 
+
             {/* Corner frame guides */}
             {cameraReady && (
               <>
@@ -390,7 +366,7 @@ export default function QRScanner({
                 ].map((style, i) => (
                   <div key={i} style={{ position: 'absolute', width: '28px', height: '28px', ...style }} />
                 ))}
- 
+
                 {/* Animated scan line */}
                 <div
                   className="scan-line"
@@ -406,7 +382,7 @@ export default function QRScanner({
                 />
               </>
             )}
- 
+
             {/* Result overlay */}
             {result && result.type !== 'success' && (
               <div style={{
@@ -434,7 +410,7 @@ export default function QRScanner({
             )}
           </div>
         )}
- 
+
         {/* Camera error notice */}
         {cameraError && (
           <div style={{
@@ -452,7 +428,7 @@ export default function QRScanner({
             </p>
           </div>
         )}
- 
+
         {/* Instruction text */}
         {cameraReady && !cameraError && (
           <p style={{
@@ -464,7 +440,7 @@ export default function QRScanner({
             Point at an attendee&apos;s badge QR code
           </p>
         )}
- 
+
         {/* Manual entry */}
         <div style={{
           margin: '20px 20px 0',
@@ -517,7 +493,7 @@ export default function QRScanner({
             </button>
           </form>
         </div>
- 
+
         {/* Recent check-ins */}
         {recentCheckins.length > 0 && (
           <div style={{
@@ -571,7 +547,7 @@ export default function QRScanner({
             ))}
           </div>
         )}
- 
+
         {/* Bottom spacer when no recent checkins */}
         {recentCheckins.length === 0 && <div style={{ height: '40px' }} />}
       </div>

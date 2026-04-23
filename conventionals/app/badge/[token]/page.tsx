@@ -198,10 +198,10 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
               <Image
                 src={qrDataUrl}
                 alt="Badge QR Code"
-                width={200}
-                height={200}
+                width={280}
+                height={280}
                 unoptimized
-                style={{ display: 'block', borderRadius: '8px' }}
+                style={{ display: 'block', borderRadius: '8px', imageRendering: 'pixelated' }}
               />
             </div>
             <p style={{
