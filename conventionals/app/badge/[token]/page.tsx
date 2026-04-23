@@ -189,19 +189,24 @@ export default async function BadgePage({ params }: { params: Promise<{ token: s
             marginBottom: '20px',
           }}>
             <div style={{
-              padding: '12px',
+              padding: '16px',
               border: '1px solid #e2e8f0',
               borderRadius: '16px',
-              backgroundColor: '#f8fafc',
+              backgroundColor: '#ffffff',
               marginBottom: '10px',
             }}>
               <Image
                 src={qrDataUrl}
                 alt="Badge QR Code"
-                width={200}
-                height={200}
+                width={240}
+                height={240}
                 unoptimized
-                style={{ display: 'block', borderRadius: '8px' }}
+                style={{
+                  display: 'block',
+                  borderRadius: '4px',
+                  filter: 'grayscale(1) contrast(2)',
+                  imageRendering: 'crisp-edges',
+                }}
               />
             </div>
             <p style={{
