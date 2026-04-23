@@ -35,12 +35,52 @@ export default async function AttendeeEventPage({ params }: { params: Promise<{ 
   ])
 
   if (!event) notFound()
+  // ev is narrowed to non-null for use in nested expressions
+  const ev = event
 
-  const dateStr = event.eventDate
-    ? new Date(event.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const dateStr = ev.eventDate
+    ? new Date(ev.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     : null
 
-  const isUpcoming = event.eventDate ? new Date(event.eventDate) >= new Date() : false
+  const isUpcoming = ev.eventDate ? new Date(ev.eventDate) >= new Date() : false
+
+  // "Add to Calendar" Google Calendar URL
+  const calendarUrl = (() => {
+    if (!ev.eventDate) return null
+    const dateCompact = ev.eventDate.replace(/-/g, '')
+    const startDt = ev.startTime ? `${dateCompact}T${ev.startTime.replace(':', '')}00` : dateCompact
+    const endDt = ev.endTime ? `${dateCompact}T${ev.endTime.replace(':', '')}00` : dateCompact
+    const calParams = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: ev.name,
+      dates: `${startDt}/${endDt}`,
+      ...(ev.description ? { details: ev.description } : {}),
+      ...(ev.location ? { location: ev.location } : {}),
+    })
+    return `https://calendar.google.com/calendar/render?${calParams.toString()}`
+  })()
+
+  const mapsEmbedUrl = ev.location
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(ev.location)}&output=embed`
+    : null
+  const mapsDirectionsUrl = ev.location
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(ev.location)}`
+    : null
+
+  // Format times for display (HH:MM → 12-hour)
+  function fmt12(t: string | null) {
+    if (!t) return null
+    const [h, m] = t.split(':').map(Number)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const h12 = h % 12 || 12
+    return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+  }
+
+  const timeDisplay = ev.startTime
+    ? ev.endTime
+      ? `${fmt12(ev.startTime)} – ${fmt12(ev.endTime)}`
+      : fmt12(ev.startTime)
+    : null
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: C.surface }}>
@@ -83,7 +123,7 @@ export default async function AttendeeEventPage({ params }: { params: Promise<{ 
             {isUpcoming ? 'Upcoming Event' : 'Past Event'}
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.25 }}>
-            {event.name}
+            {ev.name}
           </h1>
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
             {dateStr && (
@@ -91,13 +131,127 @@ export default async function AttendeeEventPage({ params }: { params: Promise<{ 
                 <span>📅</span> {dateStr}
               </div>
             )}
-            {event.organizerName && (
+            {ev.organizerName && (
               <div style={{ fontSize: '14px', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>👤</span> Hosted by {event.organizerName}
+                <span>👤</span> Hosted by {ev.organizerName}
               </div>
             )}
           </div>
         </div>
+
+        {/* Time + location + website chips */}
+        {(timeDisplay || ev.location || ev.website || calendarUrl) && (
+          <div style={{
+            background: C.white,
+            border: `1px solid ${C.border}`,
+            borderRadius: '16px',
+            padding: '16px',
+            marginBottom: '16px',
+            display: 'flex',
+            flexDirection: 'column' as const,
+            gap: '12px',
+          }}>
+            {timeDisplay && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '18px', flexShrink: 0 }}>🕐</span>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: C.text }}>{timeDisplay}</span>
+              </div>
+            )}
+            {ev.location && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <span style={{ fontSize: '18px', flexShrink: 0 }}>📍</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: C.text, marginBottom: '4px' }}>{ev.location}</div>
+                  {mapsDirectionsUrl && (
+                    <a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer" style={{
+                      fontSize: '12px', fontWeight: 600, color: C.primary, textDecoration: 'none',
+                      background: '#ede9fe', border: '1px solid #c4b5fd', borderRadius: '20px', padding: '3px 10px',
+                      display: 'inline-block',
+                    }}>
+                      Get Directions →
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+            {ev.website && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '18px', flexShrink: 0 }}>🌐</span>
+                <a href={ev.website} target="_blank" rel="noopener noreferrer" style={{
+                  fontSize: '14px', fontWeight: 600, color: C.primary, textDecoration: 'none',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+                }}>
+                  {ev.website.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
+            )}
+            {calendarUrl && (
+              <a
+                href={calendarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  height: '40px',
+                  background: '#f0fdf4',
+                  color: '#16a34a',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                📅 Add to Google Calendar
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Description */}
+        {ev.description && (
+          <div style={{
+            background: C.white,
+            border: `1px solid ${C.border}`,
+            borderRadius: '16px',
+            padding: '16px',
+            marginBottom: '16px',
+          }}>
+            <div style={{
+              fontSize: '11px', fontWeight: 700, color: C.text3,
+              textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px',
+            }}>
+              About this Event
+            </div>
+            <p style={{ fontSize: '14px', color: C.text2, lineHeight: 1.65, margin: 0, whiteSpace: 'pre-wrap' }}>
+              {ev.description}
+            </p>
+          </div>
+        )}
+
+        {/* Map embed */}
+        {mapsEmbedUrl && (
+          <div style={{
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: `1px solid ${C.border}`,
+            marginBottom: '16px',
+            height: '200px',
+          }}>
+            <iframe
+              src={mapsEmbedUrl}
+              width="100%"
+              height="200"
+              style={{ border: 'none', display: 'block' }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Event location map"
+            />
+          </div>
+        )}
 
         {/* Quick actions */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>

@@ -24,6 +24,11 @@ export const events = pgTable("events", {
 	organizerId: integer("organizer_id").notNull(),
 	name: text().notNull(),
 	eventDate: date("event_date"),
+	description: text("description"),
+	location: text("location"),
+	startTime: varchar("start_time", { length: 20 }),
+	endTime: varchar("end_time", { length: 20 }),
+	website: varchar("website", { length: 500 }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
 	foreignKey({

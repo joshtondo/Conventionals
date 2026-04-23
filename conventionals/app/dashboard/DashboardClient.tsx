@@ -9,6 +9,7 @@ type EventItem = {
   id: number
   name: string
   eventDate: string | null
+  location: string | null
   createdAt: string | null
 }
 
@@ -571,6 +572,11 @@ export default function DashboardClient({
                     <p style={{ fontSize: '0.8rem', color: C.text2, margin: 0 }}>
                       {event.eventDate ?? 'No date set'}
                     </p>
+                    {event.location && (
+                      <p style={{ fontSize: '0.8rem', color: C.text3, margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        📍 {event.location}
+                      </p>
+                    )}
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const, marginTop: '2px' }}>
                       <span style={{ fontSize: '0.75rem', color: C.text2, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '2px 10px', whiteSpace: 'nowrap' as const }}>
                         🎟️ {es.total} registered
@@ -582,33 +588,51 @@ export default function DashboardClient({
                         📧 {es.emailsSent} emails
                       </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
                       <a href={`/event/${event.id}/upload`} style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        height: '44px',
+                        height: '32px',
+                        padding: '0 12px',
                         color: C.primary,
                         textDecoration: 'none',
                         fontSize: '0.8125rem',
                         fontWeight: 600,
-                        marginRight: '12px',
+                        background: '#ede9fe',
+                        borderRadius: '20px',
+                        border: '1px solid #c4b5fd',
                       }}>
-                        Manage attendees →
+                        Attendees →
                       </a>
                       <a href={`/event/${event.id}/scan`} style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         height: '32px',
                         padding: '0 12px',
-                        backgroundColor: '#ede9fe',
-                        color: C.primary,
+                        backgroundColor: '#d1fae5',
+                        color: '#059669',
                         textDecoration: 'none',
                         fontSize: '0.8125rem',
                         fontWeight: 600,
                         borderRadius: '20px',
-                        border: '1px solid #c4b5fd',
+                        border: '1px solid #6ee7b7',
                       }}>
-                        📷 Scan In
+                        📷 Scan
+                      </a>
+                      <a href={`/event/${event.id}/details`} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        height: '32px',
+                        padding: '0 12px',
+                        backgroundColor: C.surface,
+                        color: C.text2,
+                        textDecoration: 'none',
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        borderRadius: '20px',
+                        border: `1px solid ${C.border}`,
+                      }}>
+                        ✏️ Edit Details
                       </a>
                     </div>
                   </li>

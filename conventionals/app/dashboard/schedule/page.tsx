@@ -120,7 +120,7 @@ export default async function SchedulePage() {
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <a href={`/event/${event.id}/upload`} style={{
             fontSize: '12px', fontWeight: 600, color: C.primary, textDecoration: 'none',
             background: '#ede9fe', border: '1px solid #c4b5fd', borderRadius: '20px', padding: '4px 12px',
@@ -132,6 +132,12 @@ export default async function SchedulePage() {
             background: '#d1fae5', border: '1px solid #6ee7b7', borderRadius: '20px', padding: '4px 12px',
           }}>
             📷 Scan
+          </a>
+          <a href={`/event/${event.id}/details`} style={{
+            fontSize: '12px', fontWeight: 600, color: C.text2, textDecoration: 'none',
+            background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '4px 12px',
+          }}>
+            ✏️ Edit Details
           </a>
         </div>
       </div>

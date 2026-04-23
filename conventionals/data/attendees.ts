@@ -142,6 +142,11 @@ export async function getEventDetailsForAttendee(eventId: number, attendeeAccoun
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      description: events.description,
+      location: events.location,
+      startTime: events.startTime,
+      endTime: events.endTime,
+      website: events.website,
       organizerName: organizers.name,
     })
     .from(events)

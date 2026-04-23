@@ -9,6 +9,7 @@ export async function getEvents(organizerId: number) {
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      location: events.location,
       createdAt: events.createdAt,
     })
     .from(events)
@@ -16,16 +17,27 @@ export async function getEvents(organizerId: number) {
     .orderBy(desc(events.createdAt))
 }
 
+const eventDetailFields = {
+  id: events.id,
+  name: events.name,
+  eventDate: events.eventDate,
+  description: events.description,
+  location: events.location,
+  startTime: events.startTime,
+  endTime: events.endTime,
+  website: events.website,
+}
+
 export async function getEventById(eventId: number, organizerId: number) {
   // Allow access if organizer is the owner OR an accepted co-organizer
   const [owned] = await db
-    .select({ id: events.id, name: events.name, eventDate: events.eventDate })
+    .select(eventDetailFields)
     .from(events)
     .where(and(eq(events.id, eventId), eq(events.organizerId, organizerId)))
   if (owned) return { ...owned, isOwner: true }
 
   const [coOrg] = await db
-    .select({ id: events.id, name: events.name, eventDate: events.eventDate })
+    .select(eventDetailFields)
     .from(events)
     .innerJoin(eventOrganizers, and(
       eq(eventOrganizers.eventId, events.id),
@@ -38,12 +50,22 @@ export async function getEventById(eventId: number, organizerId: number) {
   return null
 }
 
-export async function updateEvent(eventId: number, organizerId: number, name: string, eventDate: string | null) {
+type EventUpdateFields = {
+  name: string
+  eventDate: string | null
+  description?: string | null
+  location?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  website?: string | null
+}
+
+export async function updateEvent(eventId: number, organizerId: number, fields: EventUpdateFields) {
   const [updated] = await db
     .update(events)
-    .set({ name, eventDate })
+    .set(fields)
     .where(and(eq(events.id, eventId), eq(events.organizerId, organizerId)))
-    .returning({ id: events.id, name: events.name, eventDate: events.eventDate })
+    .returning(eventDetailFields)
   return updated ?? null
 }
 
