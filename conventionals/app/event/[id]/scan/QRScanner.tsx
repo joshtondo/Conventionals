@@ -119,6 +119,8 @@ export default function QRScanner({
 
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
 
+    let frameCount = 0
+
     function tick() {
       // Read both refs fresh each tick — avoids TypeScript closure-narrowing issues
       // and handles the case where the video element is removed from the DOM.
@@ -132,9 +134,12 @@ export default function QRScanner({
         if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth
         if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight
 
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-        if (!pausedRef.current) {
+        // Throttle jsQR to every 3rd frame (~20fps at 60Hz) to keep the main
+        // thread free on mobile. Drawing still happens every frame so the
+        // viewfinder stays smooth.
+        frameCount++
+        if (frameCount % 3 === 0 && !pausedRef.current) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
           // inversionAttempts: 'dontInvert' — our QR codes are always black-on-white
           // (forced by lib/qr.ts), so no need to try the inverted pass.
@@ -179,16 +184,19 @@ export default function QRScanner({
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
         })
         if (!mounted) { stream.getTracks().forEach(t => t.stop()); return }
 
         streamRef.current = stream
+        // Set srcObject BEFORE play() — do NOT await loadedmetadata first.
+        // For MediaStream sources, loadedmetadata can fire synchronously before
+        // the handler is attached, which causes the Promise to hang forever.
         video.srcObject = stream
-
-        // Wait for the browser to read the stream's metadata (dimensions, etc.)
-        await new Promise<void>(resolve => { video.onloadedmetadata = () => resolve() })
-        if (!mounted) return
 
         try {
           await video.play()
