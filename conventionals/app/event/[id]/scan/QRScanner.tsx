@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { BrowserMultiFormatReader } from '@zxing/browser'
-import type { IScannerControls } from '@zxing/browser'
+import jsQR from 'jsqr'
 import { initials } from '@/lib/utils'
 
 const C = {
@@ -54,7 +53,7 @@ export default function QRScanner({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const pausedRef = useRef(false)
-  const controlsRef = useRef<IScannerControls | null>(null)
+  const rafRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
   const [cameraReady, setCameraReady] = useState(false)
@@ -106,81 +105,113 @@ export default function QRScanner({
     }, 2500)
   }, [])
 
-  // Starts the zxing decode loop against the raw camera stream.
-  // zxing owns the video setup (srcObject + play) — we never call video.play()
-  // before this, because doing so causes a double-play that breaks iOS Safari
-  // (the second play() lands outside the user-gesture window).
-  const startDecoding = useCallback(() => {
-    const video = videoRef.current
-    const stream = streamRef.current
-    if (!video || !stream) return
+  // Starts the jsQR RAF decode loop on the playing video.
+  // We use RAF + jsQR instead of @zxing/browser because zxing's scan loop:
+  //  (a) captures canvas dimensions once at startup — if videoWidth/videoHeight
+  //      haven't resolved yet (common on mobile) the canvas is 0×0 forever, and
+  //  (b) uses setTimeout(500ms) between attempts — too slow for reliable scanning.
+  // RAF runs at ~60fps and we check dimensions every frame, so there's no race.
+  const startLoop = useCallback(() => {
+    // Create an offscreen canvas for frame capture
+    const canvas = document.createElement('canvas')
+    // ctx is checked inside tick each frame — if it's null the tick is a no-op
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
 
-    controlsRef.current?.stop()
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
 
-    const reader = new BrowserMultiFormatReader()
-    reader
-      .decodeFromStream(stream, video, (res) => {
-        if (res && !pausedRef.current) {
-          const token = extractToken(res.getText())
-          if (token) doCheckin(token)
+    function tick() {
+      // Read both refs fresh each tick — avoids TypeScript closure-narrowing issues
+      // and handles the case where the video element is removed from the DOM.
+      const video = videoRef.current
+      if (!video || !ctx) return
+
+      // Wait until the video has actual frame data and reported its dimensions.
+      // readyState >= HAVE_CURRENT_DATA (2) means at least one frame is available.
+      if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+        // Resize canvas to match the current video frame (handles orientation changes)
+        if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth
+        if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        if (!pausedRef.current) {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          // inversionAttempts: 'dontInvert' — our QR codes are always black-on-white
+          // (forced by lib/qr.ts), so no need to try the inverted pass.
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'dontInvert',
+          })
+          if (code?.data) {
+            const token = extractToken(code.data)
+            if (token) doCheckin(token)
+          }
         }
-      })
-      .then((controls) => {
-        controlsRef.current = controls
-        setCameraReady(true)
-        setNeedsTap(false)
-      })
-      .catch(() => {
-        // decodeFromStream throws when the browser blocks autoplay (iOS Safari).
-        // Show the tap-to-start prompt so the user can unlock playback via gesture.
-        setNeedsTap(true)
-      })
+      }
+
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
   }, [doCheckin])
 
-  // iOS "Tap to Start Camera" handler.
-  // video.play() called here is within a user-gesture, which iOS requires.
-  // After it succeeds the video is playing; startDecoding() then calls
-  // decodeFromStream which sees the video already playing and skips its
-  // own play() call — so there's no double-play race.
+  // Called when user taps the iOS "Start Camera" button.
+  // video.play() here is inside a user-gesture, which iOS requires.
   const activateCamera = useCallback(async () => {
     const video = videoRef.current
-    const stream = streamRef.current
-    if (!video || !stream) return
+    if (!video) return
     setNeedsTap(false)
-    video.srcObject = stream
     try {
       await video.play()
+      setCameraReady(true)
+      startLoop()
     } catch {
       setCameraError('Camera access denied or unavailable.')
-      return
     }
-    startDecoding()
-  }, [startDecoding])
+  }, [startLoop])
 
   useEffect(() => {
+    let mounted = true
+
     async function startCamera() {
+      // Read the ref inside the async fn so TypeScript can narrow it here
+      const video = videoRef.current
+      if (!video) return
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
         })
+        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return }
+
         streamRef.current = stream
-        // Hand the raw stream straight to zxing — it assigns srcObject and
-        // calls play() itself.  Do NOT set srcObject or call play() here;
-        // the extra play() call creates a race condition that silently breaks
-        // decoding (especially on iOS where only one play() per gesture is allowed).
-        startDecoding()
+        video.srcObject = stream
+
+        // Wait for the browser to read the stream's metadata (dimensions, etc.)
+        await new Promise<void>(resolve => { video.onloadedmetadata = () => resolve() })
+        if (!mounted) return
+
+        try {
+          await video.play()
+          if (!mounted) return
+          setCameraReady(true)
+          startLoop()
+        } catch {
+          // iOS Safari blocks autoplay without a user gesture — show tap prompt
+          if (mounted) setNeedsTap(true)
+        }
       } catch {
-        setCameraError('Camera access denied or unavailable.')
+        if (mounted) setCameraError('Camera access denied or unavailable.')
       }
     }
 
     startCamera()
 
     return () => {
-      controlsRef.current?.stop()
-      streamRef.current?.getTracks().forEach((t) => t.stop())
+      mounted = false
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      streamRef.current?.getTracks().forEach(t => t.stop())
     }
-  }, [startDecoding])
+  }, [startLoop])
 
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
