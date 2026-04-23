@@ -69,6 +69,14 @@ export async function getConnections(ownerAccountId: number) {
     .orderBy(desc(connections.updatedAt))
 }
 
+export async function deleteConnection(connectionId: number, ownerAccountId: number) {
+  const result = await db
+    .delete(connections)
+    .where(and(eq(connections.id, connectionId), eq(connections.ownerId, ownerAccountId)))
+    .returning({ id: connections.id })
+  return result[0] ?? null
+}
+
 export async function updateConnectionNotes(
   connectionId: number,
   ownerAccountId: number,

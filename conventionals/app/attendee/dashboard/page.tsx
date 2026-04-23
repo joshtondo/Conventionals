@@ -60,6 +60,7 @@ export default async function AttendeeDashboardPage() {
           eventHistory={eventHistory}
           discoverPeople={discoverPeople}
           connections={connectionsList}
+          myName={account.name ?? ''}
         />
       </main>
     </div>

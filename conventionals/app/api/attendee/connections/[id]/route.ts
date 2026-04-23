@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { withAttendeeAuth } from '@/lib/session'
-import { updateConnectionNotes } from '@/data/connections'
+import { updateConnectionNotes, deleteConnection } from '@/data/connections'
 
 export const PATCH = withAttendeeAuth(async (req, ctx) => {
   const { id } = await ctx.params
@@ -16,6 +16,16 @@ export const PATCH = withAttendeeAuth(async (req, ctx) => {
 
   const notes = typeof body.notes === 'string' ? body.notes : null
   const result = await updateConnectionNotes(connectionId, ctx.session.attendeeAccountId!, notes)
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json({ success: true })
+})
+
+export const DELETE = withAttendeeAuth(async (_req, ctx) => {
+  const { id } = await ctx.params
+  const connectionId = parseInt(id)
+  if (isNaN(connectionId)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+
+  const result = await deleteConnection(connectionId, ctx.session.attendeeAccountId!)
   if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ success: true })
 })

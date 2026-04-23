@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 type ContactInfo = { email?: string; linkedin?: string; twitter?: string; website?: string } | null
 type Draft = { subject: string; body: string }
@@ -49,6 +50,7 @@ export default function ConnectionCard({
   notes: initialNotes,
   myName,
 }: Props) {
+  const router = useRouter()
   const [notes, setNotes] = useState(initialNotes ?? '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
 
@@ -57,6 +59,9 @@ export default function ConnectionCard({
   const [drafting, setDrafting] = useState(false)
   const [draftError, setDraftError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  const [confirmRemove, setConfirmRemove] = useState(false)
+  const [removing, setRemoving] = useState(false)
 
   const ci = contactInfo ?? {}
   // Prefer the account email (always current) over whatever was in contactInfo at connection time
@@ -137,6 +142,19 @@ export default function ConnectionCard({
     }
   }
 
+  async function handleRemove() {
+    setRemoving(true)
+    try {
+      await fetch(`/api/attendee/connections/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      router.refresh()
+    } finally {
+      setRemoving(false)
+    }
+  }
+
   async function copyDraft() {
     if (!draft) return
     try {
@@ -156,21 +174,74 @@ export default function ConnectionCard({
       marginBottom: '12px',
     }}>
 
-      {/* Name + event */}
-      <div style={{ marginBottom: '10px' }}>
-        <p style={{ fontWeight: 700, color: '#111827', margin: '0 0 6px', fontSize: '16px', lineHeight: 1.2 }}>
-          {connectedName}
-        </p>
-        {eventName && (
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '4px',
-            fontSize: '12px', fontWeight: 600, color: '#6366f1',
-            background: '#ede9fe', borderRadius: '999px', padding: '3px 10px',
-          }}>
-            📅 {eventName}
-          </span>
+      {/* Name + event + remove */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontWeight: 700, color: '#111827', margin: '0 0 6px', fontSize: '16px', lineHeight: 1.2 }}>
+            {connectedName}
+          </p>
+          {eventName && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              fontSize: '12px', fontWeight: 600, color: '#6366f1',
+              background: '#ede9fe', borderRadius: '999px', padding: '3px 10px',
+            }}>
+              📅 {eventName}
+            </span>
+          )}
+        </div>
+        {!confirmRemove && (
+          <button
+            onClick={() => setConfirmRemove(true)}
+            aria-label={`Remove ${connectedName}`}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#cbd5e1', fontSize: '18px', padding: '2px 4px',
+              lineHeight: 1, flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
         )}
       </div>
+
+      {/* Inline remove confirmation */}
+      {confirmRemove && (
+        <div style={{
+          background: '#fef2f2', border: '1.5px solid #fca5a5',
+          borderRadius: '10px', padding: '12px 14px', marginBottom: '12px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+        }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#991b1b' }}>
+            Remove {connectedName}?
+          </span>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={handleRemove}
+              disabled={removing}
+              style={{
+                height: '32px', padding: '0 12px', fontSize: '13px', fontWeight: 700,
+                background: removing ? '#fca5a5' : '#ef4444', color: '#fff',
+                border: 'none', borderRadius: '7px',
+                cursor: removing ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {removing ? '…' : 'Remove'}
+            </button>
+            <button
+              onClick={() => setConfirmRemove(false)}
+              style={{
+                height: '32px', padding: '0 12px', fontSize: '13px', fontWeight: 600,
+                background: '#fff', color: '#374151',
+                border: '1.5px solid #e5e7eb', borderRadius: '7px',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Contact links */}
       {hasContactLinks && (
