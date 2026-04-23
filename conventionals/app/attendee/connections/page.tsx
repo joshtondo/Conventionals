@@ -50,6 +50,7 @@ export default async function ConnectionsPage() {
             contactInfo={conn.contactInfo ?? null}
             eventName={conn.eventName ?? null}
             notes={conn.notes ?? null}
+            myName={account?.name ?? ''}
           />
         ))
       )}
